@@ -1,0 +1,29 @@
+{
+  "overview": "codeWithcrush is an AI-powered gamified Computer Science learning platform that blends dating-sim style interactions with advanced AI teaching. Users engage with cartoon avatar companions, solve coding challenges across 15+ domains, earn XP and rewards, and connect with a social community — all with voice and ChatGPT-quality AI responses.",
+  "features": [
+    "15+ structured CS domains with Module 0 orientation, 5+ modules, quizzes, and certificates",
+    "Meta AI-style chatbot with animated bubbles, quick-reply suggestions, and behaviour-adaptive responses",
+    "Two-way voice chat — user mic + ElevenLabs AI voice",
+    "Code correctness checker across compiler, problems, practice, and tests",
+    "GeeksforGeeks-depth Documentation Hub with 120+ topics and Try it Yourself editors",
+    "LinkedIn-style direct messaging between users with typing indicators",
+    "Instagram-style avatar store with 75+ items, real-time preview, and GCoins",
+    "Progress report showing completed projects, current activity, and upcoming goals",
+    "Samsung-level SEO with sitemap served from backend as real XML",
+    "Full responsive design for mobile, tablet, and desktop"
+  ],
+  "category": "education",
+  "tags": [
+    "cs-learning",
+    "ai-tutor",
+    "gamified",
+    "coding",
+    "icp",
+    "voice-chat",
+    "avatar",
+    "geeksforgeeks-style",
+    "documentation",
+    "social-learning"
+  ],
+  "last_updated": "2026-04-22T14:22:38.513Z"
+}
