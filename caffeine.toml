@@ -9,4 +9,3 @@ include = ["src/**"]
 
 [canisters.frontend]
 depends_on = ["backend"]
-

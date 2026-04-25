@@ -594,7 +594,7 @@ function ProblemsSubPage({
     });
 
   return (
-    <div className="flex-1 bg-background flex flex-col overflow-hidden min-h-0">
+    <div className="flex-1 bg-background flex flex-col overflow-hidden min-h-0 w-full">
       <PageHeader
         title="Coding Problems"
         emoji="🧩"
@@ -603,8 +603,8 @@ function ProblemsSubPage({
         gradientFrom="#10b981"
         gradientTo="#0d9488"
       />
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-nav-safe">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-screen-lg mx-auto px-3 sm:px-4 xl:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-nav-safe w-full">
           {/* Difficulty Progress Rings */}
           <div className="bg-card border border-border rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
@@ -840,7 +840,7 @@ function ProblemsSubPage({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {visibleProblems.map((problem) => (
                   <ProblemCard
                     key={problem.id}
@@ -2988,12 +2988,12 @@ export default function ProblemsPage({
 
   // ── Banner List ──────────────────────────────────────────────────────────────
   return (
-    <div className="flex-1 min-h-0 bg-background flex flex-col overflow-hidden">
-      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+    <div className="flex-1 min-h-0 bg-background flex flex-col overflow-hidden w-full">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0">
         <span className="font-bold text-foreground">Code Studio 💻</span>
       </header>
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-nav-safe">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-screen-lg mx-auto px-3 sm:px-4 xl:px-6 py-4 sm:py-6 pb-nav-safe w-full">
           {/* POTD Banner — always first */}
           <POTDBanner
             onStartProblem={(id) => setCurrentProblemId(id)}

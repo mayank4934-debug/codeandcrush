@@ -1,10 +1,22 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Info, MapPin, Trophy, Users } from "lucide-react";
+import {
+  Calendar,
+  ExternalLink,
+  Info,
+  MapPin,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
-type EventCategory = "All" | "Hackathon" | "Contest" | "Workshop";
+type EventCategory =
+  | "All"
+  | "Hackathon"
+  | "Contest"
+  | "Conference"
+  | "Workshop";
 type EventStatus = "All" | "Upcoming" | "Ongoing" | "Past";
 
 interface Event {
@@ -21,390 +33,355 @@ interface Event {
   hot: boolean;
   status: "Upcoming" | "Ongoing" | "Past";
   tags: string[];
+  registerUrl: string;
 }
 
 const EVENTS: Event[] = [
   {
     id: 1,
+    name: "Google Summer of Code 2025",
+    organizer: "Google",
+    dateRange: "May – Aug 2025",
+    location: "Remote (Global)",
+    category: "Contest",
+    description:
+      "Google's flagship open source program where students contribute to real-world open source projects under the mentorship of experienced developers. Selected participants receive a stipend of $3,000–$6,600 based on project size. Ideal for students wanting to build their open source portfolio and network with Google engineers.",
+    prize: "Stipend $3,000–$6,600",
+    participants: 15000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Ongoing",
+    tags: ["Google", "Open Source", "Mentorship", "Remote"],
+    registerUrl: "https://summerofcode.withgoogle.com",
+  },
+  {
+    id: 2,
+    name: "Meta Hacker Cup 2025",
+    organizer: "Meta",
+    dateRange: "Jun – Oct 2025",
+    location: "Remote (Global)",
+    category: "Contest",
+    description:
+      "Meta's prestigious annual international programming competition featuring multiple elimination rounds from qualification to the onsite finals. Solve complex algorithmic problems competing against thousands of top coders worldwide. Top performers win cash prizes, exclusive Meta merchandise, and direct recognition from Meta engineers.",
+    prize: "$20,000 prize pool",
+    participants: 25000,
+    difficulty: "Advanced",
+    hot: true,
+    status: "Upcoming",
+    tags: ["Meta", "Algorithms", "Elimination Rounds", "DS"],
+    registerUrl: "https://www.facebook.com/hackercup",
+  },
+  {
+    id: 3,
+    name: "ICPC World Finals 2025",
+    organizer: "ICPC Foundation",
+    dateRange: "Oct 2025",
+    location: "Luxor, Egypt",
+    category: "Contest",
+    description:
+      "The International Collegiate Programming Contest World Finals — the pinnacle of university-level competitive programming. Teams of three solve complex algorithmic problems under a 5-hour time limit. Top regional finalists from around the world compete for medals, cash prizes, and the most coveted title in competitive programming.",
+    prize: "$15,000 + medals",
+    participants: 50000,
+    difficulty: "Advanced",
+    hot: true,
+    status: "Upcoming",
+    tags: ["ICPC", "Algorithms", "University", "World Finals"],
+    registerUrl: "https://icpc.global",
+  },
+  {
+    id: 4,
+    name: "ACM SIGKDD Data Mining Cup 2025",
+    organizer: "ACM SIGKDD",
+    dateRange: "Aug 2025",
+    location: "Remote (Global)",
+    category: "Contest",
+    description:
+      "One of the most prestigious data science competitions in academia, organized alongside the KDD Conference. Teams tackle real-world data mining and machine learning challenges submitted by industry sponsors. Winners receive cash prizes and publication recognition in the KDD proceedings.",
+    prize: "$10,000 prize pool",
+    participants: 5000,
+    difficulty: "Advanced",
+    hot: false,
+    status: "Upcoming",
+    tags: ["Data Science", "ML", "ACM", "Mining"],
+    registerUrl: "https://www.kdd.org/kdd2025",
+  },
+  {
+    id: 5,
+    name: "GitHub Universe 2025",
+    organizer: "GitHub",
+    dateRange: "Oct 2025",
+    location: "San Francisco, USA",
+    category: "Conference",
+    description:
+      "GitHub's flagship annual developer conference bringing together tens of thousands of developers, maintainers, and open source enthusiasts. Sessions cover AI-powered development, GitHub Copilot advances, DevSecOps, and the future of software collaboration. Free virtual attendance option available globally.",
+    prize: "Free (Virtual) / Paid (In-person)",
+    participants: 40000,
+    difficulty: "All Levels",
+    hot: false,
+    status: "Upcoming",
+    tags: ["GitHub", "Copilot", "AI", "DevOps"],
+    registerUrl: "https://githubuniverse.com",
+  },
+  {
+    id: 6,
+    name: "Google I/O Extended 2025",
+    organizer: "Google Developer Groups",
+    dateRange: "Jun – Aug 2025",
+    location: "Worldwide (100+ cities)",
+    category: "Conference",
+    description:
+      "Community-run extensions of the main Google I/O event, organized by Google Developer Groups across 100+ cities worldwide. Covers Google's latest announcements in AI (Gemini), Android, Flutter, Web, and Cloud. A great opportunity to network locally and watch live I/O sessions with fellow developers.",
+    prize: "Free entry",
+    participants: 200000,
+    difficulty: "All Levels",
+    hot: true,
+    status: "Upcoming",
+    tags: ["Google", "AI", "Android", "Flutter", "GDG"],
+    registerUrl: "https://io.google/2025/program/",
+  },
+  {
+    id: 7,
     name: "Smart India Hackathon 2025",
     organizer: "Government of India / AICTE",
-    dateRange: "Aug – Dec 2025",
-    location: "Nationwide, India (Offline)",
+    dateRange: "Aug – Sep 2025",
+    location: "Pan India (Offline)",
     category: "Hackathon",
     description:
-      "India's largest national hackathon where students solve real-world problem statements from government ministries and PSUs. Categories span healthcare, agriculture, smart cities, fintech, and education. Winners receive ₹1 Lakh per team plus guaranteed internship opportunities.",
+      "India's largest national hackathon where students solve real-world problem statements from government ministries and PSUs. Categories span healthcare, agriculture, smart cities, fintech, and education. Winners receive ₹1 Lakh per team, plus guaranteed internship opportunities with leading public sector organizations.",
     prize: "₹1 Lakh per team + internships",
     participants: 500000,
     difficulty: "All Levels",
     hot: true,
     status: "Upcoming",
     tags: ["India", "Government", "AI", "Social Good"],
-  },
-  {
-    id: 2,
-    name: "HackWithInfy 2025",
-    organizer: "Infosys",
-    dateRange: "Sep – Oct 2025",
-    location: "Online (India Focus)",
-    category: "Hackathon",
-    description:
-      "Infosys's flagship national hackathon open to engineering college students across India. Build innovative solutions using modern tech stacks. Shortlisted teams get to present at Infosys campuses and winners receive pre-placement offers.",
-    prize: "PPO + Cash Prizes",
-    participants: 80000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Upcoming",
-    tags: ["Infosys", "India", "PPO", "Engineering"],
-  },
-  {
-    id: 3,
-    name: "Google Gemini API Developer Competition",
-    organizer: "Google",
-    dateRange: "Rolling 2025",
-    location: "Online (Global)",
-    category: "Hackathon",
-    description:
-      "Build innovative apps powered by Google's Gemini AI APIs. Showcase creative use of multimodal AI, reasoning, and code generation. Winners across categories receive cash prizes, Google credits, and recognition from Google engineers.",
-    prize: "$1,000,000+ total prize pool",
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Ongoing",
-    tags: ["Google", "AI", "Gemini", "API"],
-  },
-  {
-    id: 4,
-    name: "Microsoft Azure AI Hackathon 2025",
-    organizer: "Microsoft",
-    dateRange: "Q3–Q4 2025",
-    location: "Online (Global)",
-    category: "Hackathon",
-    description:
-      "Design and build intelligent solutions powered by Microsoft Azure AI services — from Copilot integrations to Azure OpenAI, Cognitive Services, and ML Studio. Open to all experience levels with dedicated tracks for students and professionals.",
-    prize: "$50,000 + Azure credits",
-    difficulty: "All Levels",
-    hot: true,
-    status: "Upcoming",
-    tags: ["Microsoft", "Azure", "AI", "Cloud"],
-  },
-  {
-    id: 5,
-    name: "MLH Global Hackathon Series 2025–2026",
-    organizer: "Major League Hacking",
-    dateRange: "Monthly, 2025–2026",
-    location: "Online + Global Cities",
-    category: "Hackathon",
-    description:
-      "MLH's world-renowned hackathon series running monthly across 100+ universities and cities globally. Each event runs 24–48 hours and is open to students of all skill levels. Includes hardware hacks, AI tracks, and social good challenges.",
-    prize: "Varies per event (up to $10K)",
-    participants: 200000,
-    difficulty: "All Levels",
-    hot: false,
-    status: "Ongoing",
-    tags: ["MLH", "Student", "Global", "Monthly"],
-  },
-  {
-    id: 6,
-    name: "ETHIndia 2025",
-    organizer: "ETHGlobal / Devfolio",
-    dateRange: "Nov 2025",
-    location: "Bengaluru, India",
-    category: "Hackathon",
-    description:
-      "Asia's largest Ethereum hackathon bringing together builders, designers, and entrepreneurs to create the next generation of decentralized applications. 36-hour build sprint with workshops from leading Web3 protocols and $500K+ in prizes.",
-    prize: "$500,000+ prize pool",
-    participants: 3000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Upcoming",
-    tags: ["Ethereum", "Web3", "DeFi", "India"],
-  },
-  {
-    id: 7,
-    name: "HackJaipur 2025",
-    organizer: "HackJaipur Community",
-    dateRange: "Aug 2025",
-    location: "Jaipur, Rajasthan",
-    category: "Hackathon",
-    description:
-      "Rajasthan's premier annual hackathon celebrating innovation in the Pink City. Students from across India converge for a 36-hour build marathon. Themes span FinTech, HealthTech, EdTech, and Smart City solutions with exciting sponsor tracks.",
-    prize: "₹2 Lakh total prizes",
-    participants: 1500,
-    difficulty: "All Levels",
-    hot: false,
-    status: "Upcoming",
-    tags: ["India", "Jaipur", "Student", "FinTech"],
+    registerUrl: "https://www.sih.gov.in",
   },
   {
     id: 8,
-    name: "HackBMU 2025",
-    organizer: "BML Munjal University",
-    dateRange: "Oct 2025",
-    location: "Online",
-    category: "Hackathon",
+    name: "HackerEarth FutureCode 2025",
+    organizer: "HackerEarth",
+    dateRange: "Jul 2025",
+    location: "Remote (Global)",
+    category: "Contest",
     description:
-      "BML Munjal University's flagship international hackathon attracting teams from 30+ countries. Build solutions for real-world challenges across sustainability, healthcare, and education. 48-hour sprint with mentorship from industry experts.",
-    prize: "$5,000 + internship offers",
-    participants: 5000,
-    difficulty: "All Levels",
+      "HackerEarth's annual flagship algorithm coding competition open to developers of all experience levels. Multiple rounds test data structures, dynamic programming, graphs, and number theory. Top rankers win cash prizes and get noticed by recruiters from 1000+ companies using HackerEarth for hiring.",
+    prize: "$5,000 prize pool",
+    participants: 50000,
+    difficulty: "Intermediate",
     hot: false,
     status: "Upcoming",
-    tags: ["BML Munjal", "International", "Online"],
+    tags: ["HackerEarth", "Algorithms", "Hiring", "Global"],
+    registerUrl: "https://www.hackerearth.com/challenges",
   },
   {
     id: 9,
-    name: "CodeFest 2026 by IIT Kharagpur",
-    organizer: "IIT Kharagpur",
-    dateRange: "Feb 2026",
-    location: "IIT Kharagpur, India",
-    category: "Hackathon",
+    name: "Codeforces Round Series 2025",
+    organizer: "Codeforces",
+    dateRange: "Monthly May – Dec 2025",
+    location: "Remote (Global)",
+    category: "Contest",
     description:
-      "One of India's oldest and most prestigious tech fests hosted by IIT Kharagpur. CodeFest includes a 24-hour hackathon, competitive programming contests, and project expos. Draws over 10,000 participants from premier engineering institutes.",
-    prize: "₹5 Lakh+ total prizes",
-    participants: 10000,
-    difficulty: "Advanced",
-    hot: true,
-    status: "Upcoming",
-    tags: ["IIT", "India", "Prestigious", "Multi-event"],
-  },
-  {
-    id: 10,
-    name: "AngelHack Global Series 2025–2026",
-    organizer: "AngelHack",
-    dateRange: "Multiple dates, 2025–2026",
-    location: "50+ Cities + Online",
-    category: "Hackathon",
-    description:
-      "World's largest and most diverse hackathon community with events across 50+ cities. Build real startups and get access to AngelHack's global network of investors and accelerators. Top teams advance to the Global Demo Day for investor pitches.",
-    prize: "$100K+ + investor access",
-    participants: 300000,
+      "Monthly rated competitive programming rounds on one of the world's top competitive programming platforms. Each round features 5–7 algorithmic problems with increasing difficulty. Contributes to your global Codeforces rating used by FAANG recruiters. Educational rounds include editorial explanations for every problem.",
+    prize: "Free / Rating-based",
     difficulty: "All Levels",
     hot: false,
     status: "Ongoing",
-    tags: ["Startup", "Global", "Investors", "Demo Day"],
+    tags: ["Codeforces", "Competitive", "Rated", "Monthly"],
+    registerUrl: "https://codeforces.com/contests",
   },
   {
-    id: 11,
-    name: "ICPC Regional Contests 2025–26",
-    organizer: "ICPC Foundation",
-    dateRange: "Oct 2025 – Feb 2026",
-    location: "Multiple Sites, Worldwide",
-    category: "Contest",
-    description:
-      "The International Collegiate Programming Contest — the world's most prestigious university-level programming competition. Teams of 3 solve complex algorithmic problems under 5-hour time pressure. Top regional teams advance to the World Finals.",
-    prize: "World Finals qualification + medals",
-    participants: 50000,
-    difficulty: "Advanced",
-    hot: true,
-    status: "Upcoming",
-    tags: ["ICPC", "Algorithms", "University", "World Finals"],
-  },
-  {
-    id: 12,
-    name: "Google Code Jam 2025",
-    organizer: "Google",
-    dateRange: "Apr – May 2025",
-    location: "Online (Global)",
-    category: "Contest",
-    description:
-      "Google's iconic annual algorithmic coding competition with multiple rounds of increasing difficulty. Thousands of coders compete to earn a coveted spot at the finals. Top finishers receive cash prizes and a chance to interview at Google.",
-    prize: "Cash prizes + Google interviews",
-    participants: 30000,
-    difficulty: "Advanced",
-    hot: true,
-    status: "Past",
-    tags: ["Google", "Algorithms", "Competitive Programming"],
-  },
-  {
-    id: 13,
-    name: "Facebook Hacker Cup 2025",
-    organizer: "Meta",
-    dateRange: "Aug – Nov 2025",
-    location: "Online (Global)",
-    category: "Contest",
-    description:
-      "Meta's annual international programming competition with multiple elimination rounds. Solve complex algorithmic problems competing with top coders worldwide. Top performers receive cash prizes, Meta merchandise, and recognition from Meta engineers.",
-    prize: "Cash prizes + Meta merch",
-    participants: 25000,
-    difficulty: "Advanced",
-    hot: true,
-    status: "Upcoming",
-    tags: ["Meta", "Algorithms", "Elimination Rounds"],
-  },
-  {
-    id: 14,
-    name: "Codeforces Educational Rounds 2025–26",
-    organizer: "Codeforces",
-    dateRange: "Monthly, ongoing",
-    location: "Online",
-    category: "Contest",
-    description:
-      "Monthly educational-style competitive programming rounds designed to teach algorithms and problem-solving patterns. Each round features 7 problems with editorial explanations. Rated rounds contribute to global Codeforces ranking.",
-    prize: "Rating + editorial insights",
-    difficulty: "Intermediate",
-    hot: false,
-    status: "Ongoing",
-    tags: ["Codeforces", "Educational", "Rated", "Monthly"],
-  },
-  {
-    id: 15,
-    name: "LeetCode Weekly Contests 2025–26",
+    id: 10,
+    name: "LeetCode Weekly Contest 2025",
     organizer: "LeetCode",
-    dateRange: "Every Sunday, ongoing",
-    location: "Online",
+    dateRange: "Every Sunday, year-round",
+    location: "Remote (Global)",
     category: "Contest",
     description:
-      "Weekly timed contests with 4 problems across Easy, Medium, and Hard difficulty. Crucial for building problem-solving speed for technical interviews at FAANG. Consistency is key to climbing the global leaderboard and improving your rating.",
-    prize: "LeetCoins + global ranking",
+      "Weekly timed contests with 4 problems across Easy, Medium, and Hard difficulty — the gold standard for FAANG interview prep. Compete globally every Sunday and build the speed and accuracy needed for technical interviews. Biweekly contests also available on alternate Saturdays.",
+    prize: "Free / Global ranking",
     difficulty: "All Levels",
     hot: false,
     status: "Ongoing",
     tags: ["LeetCode", "FAANG Prep", "Weekly", "Interview"],
+    registerUrl: "https://leetcode.com/contest",
+  },
+  {
+    id: 11,
+    name: "Devfolio Build with AI Hackathon 2025",
+    organizer: "Devfolio",
+    dateRange: "Jun 2025",
+    location: "Remote (Global)",
+    category: "Hackathon",
+    description:
+      "A premier online hackathon focused exclusively on AI/ML applications — from LLM-powered tools to computer vision and generative AI projects. Organized by Devfolio, India's largest hackathon platform. Open globally with dedicated tracks for student teams. Winning projects receive mentorship and startup network access.",
+    prize: "$10,000 prize pool",
+    participants: 10000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Upcoming",
+    tags: ["AI", "ML", "LLM", "Devfolio", "India"],
+    registerUrl: "https://devfolio.co",
+  },
+  {
+    id: 12,
+    name: "Microsoft Imagine Cup 2025",
+    organizer: "Microsoft",
+    dateRange: "Mar – May 2025",
+    location: "Remote / Seattle, USA",
+    category: "Hackathon",
+    description:
+      "Microsoft's flagship global student competition for technology-driven innovation. Teams build solutions using AI, cloud, mixed reality, and gaming to address the world's biggest challenges. The grand prize is $100,000, Azure cloud credits, and a mentoring session with Microsoft CEO Satya Nadella.",
+    prize: "$100,000 Grand Prize",
+    participants: 30000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Past",
+    tags: ["Microsoft", "Innovation", "Azure", "AI", "Student"],
+    registerUrl: "https://imaginecup.microsoft.com",
+  },
+  {
+    id: 13,
+    name: "AWS re:Invent 2025",
+    organizer: "Amazon Web Services",
+    dateRange: "Dec 2025",
+    location: "Las Vegas, USA",
+    category: "Conference",
+    description:
+      "The world's largest cloud computing conference hosted by AWS, bringing together 60,000+ developers, architects, and IT professionals. Features 2,000+ sessions, hands-on labs, certification exams, and announcements of major new AWS services. A must-attend event for cloud practitioners worldwide.",
+    prize: "Paid registration",
+    participants: 60000,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Upcoming",
+    tags: ["AWS", "Cloud", "Serverless", "DevOps", "AI"],
+    registerUrl: "https://reinvent.awsevents.com",
+  },
+  {
+    id: 14,
+    name: "GitHub Copilot Hackathon 2025",
+    organizer: "GitHub",
+    dateRange: "Jul 2025",
+    location: "Remote (Global)",
+    category: "Hackathon",
+    description:
+      "GitHub's dedicated hackathon challenging developers to build innovative applications using GitHub Copilot AI coding assistant. Explore AI pair programming, code generation, and automation. Projects judged on creativity, technical depth, and practical impact. Great for exploring cutting-edge AI development tools.",
+    prize: "$5,000 prize pool",
+    participants: 5000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Upcoming",
+    tags: ["GitHub", "Copilot", "AI Coding", "Automation"],
+    registerUrl: "https://github.com/hackathons",
+  },
+  {
+    id: 15,
+    name: "CodeChef SnackDown 2025",
+    organizer: "CodeChef",
+    dateRange: "Sep – Nov 2025",
+    location: "Remote (Global)",
+    category: "Contest",
+    description:
+      "CodeChef's annual global team programming contest with two-person teams competing across multiple online rounds culminating in an onsite final. Problems span algorithms, data structures, mathematics, and combinatorics. One of the most popular team competitive programming events with a strong Indian developer community.",
+    prize: "$10,000 prize pool",
+    participants: 100000,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Upcoming",
+    tags: ["CodeChef", "Team Contest", "Competitive", "India"],
+    registerUrl: "https://www.codechef.com/snackdown",
   },
   {
     id: 16,
-    name: "CodeChef Long Challenge 2025–26",
-    organizer: "CodeChef",
-    dateRange: "Monthly, ongoing",
-    location: "Online",
+    name: "Kaggle Competitions 2025",
+    organizer: "Kaggle / Google",
+    dateRange: "Ongoing 2025",
+    location: "Remote (Global)",
     category: "Contest",
     description:
-      "CodeChef's monthly 10-day long challenge featuring problems across mathematics, data structures, and algorithms. The extended duration makes it suitable for deep problem exploration and practice for beginners through advanced coders.",
-    prize: "Cash prizes + certificates",
-    difficulty: "Beginner",
+      "Kaggle hosts the world's leading data science and machine learning competitions, with new challenges launching monthly. Compete on real-world datasets across NLP, computer vision, tabular data, and time series. Prize pools regularly exceed $25,000, and top finishers earn Kaggle Grandmaster ranking.",
+    prize: "$25,000+ per competition",
+    participants: 300000,
+    difficulty: "Intermediate",
     hot: false,
     status: "Ongoing",
-    tags: ["CodeChef", "Monthly", "Beginner-Friendly"],
+    tags: ["Kaggle", "Data Science", "ML", "NLP", "CV"],
+    registerUrl: "https://www.kaggle.com/competitions",
   },
   {
     id: 17,
-    name: "HackerRank Week of Code 2025–26",
-    organizer: "HackerRank",
-    dateRange: "Quarterly, 2025–2026",
-    location: "Online",
-    category: "Contest",
+    name: "MLH Global Hack Week 2025",
+    organizer: "Major League Hacking",
+    dateRange: "Monthly 2025",
+    location: "Remote (Global)",
+    category: "Hackathon",
     description:
-      "HackerRank's quarterly programming contest running over 7 days. Features a series of problems that gradually increase in difficulty, covering algorithms, data structures, AI, and functional programming. Great for building stamina.",
-    prize: "Cash prizes + job interviews",
-    difficulty: "Intermediate",
+      "MLH's monthly themed virtual hack weeks designed for students new to hackathons and open source. Each week focuses on a specific technology like Web3, AI, or open source tools. Low-pressure format with workshops, office hours, and beginner-friendly challenges — perfect for building your first projects.",
+    prize: "Free / MLH swag",
+    participants: 50000,
+    difficulty: "Beginner",
     hot: false,
-    status: "Upcoming",
-    tags: ["HackerRank", "Week-long", "Multi-topic"],
+    status: "Ongoing",
+    tags: ["MLH", "Student", "Beginner", "Monthly"],
+    registerUrl: "https://ghw.mlh.io",
   },
   {
     id: 18,
-    name: "AtCoder Regular Contest 2025–26",
-    organizer: "AtCoder",
-    dateRange: "Biweekly, ongoing",
-    location: "Online",
-    category: "Contest",
+    name: "HackMIT 2025",
+    organizer: "MIT Students",
+    dateRange: "Sep 2025",
+    location: "Cambridge, USA",
+    category: "Hackathon",
     description:
-      "AtCoder's bi-weekly rated competition featuring 6 problems testing advanced algorithmic thinking. Popular among competitive programmers seeking to improve their mathematical problem-solving and dynamic programming skills.",
-    prize: "Global rating + recognition",
+      "One of the most prestigious university hackathons in the United States, organized by MIT students and attended by 1000+ hackers from top universities globally. 24-hour build sprint with workshops from leading tech companies and $10,000+ in prizes across multiple tracks including hardware, AI, and social good.",
+    prize: "$10,000+ prize pool",
+    participants: 1000,
     difficulty: "Advanced",
-    hot: false,
-    status: "Ongoing",
-    tags: ["AtCoder", "Japanese", "Biweekly", "Rated"],
+    hot: true,
+    status: "Upcoming",
+    tags: ["MIT", "University", "USA", "AI", "Hardware"],
+    registerUrl: "https://hackmit.org",
   },
   {
     id: 19,
-    name: "CS50x Puzzle Day 2025",
-    organizer: "Harvard / CS50",
-    dateRange: "Apr 2025",
-    location: "Online (Global)",
-    category: "Contest",
+    name: "PyCon US 2025",
+    organizer: "Python Software Foundation",
+    dateRange: "May 2025",
+    location: "Pittsburgh, USA",
+    category: "Conference",
     description:
-      "Harvard's CS50 annual puzzle-solving event open to everyone — no programming experience required. Teams of up to 4 solve logic puzzles and cryptic challenges. A fun, social event introducing newcomers to computer science concepts.",
-    prize: "CS50 certificates + swag",
-    participants: 20000,
-    difficulty: "Beginner",
+      "The flagship annual conference for the Python programming language community. Features hundreds of talks, tutorials, and open space sessions covering Python internals, data science, web development, and community building. Also includes sprints for contributing to CPython and major Python packages.",
+    prize: "Paid registration",
+    participants: 3000,
+    difficulty: "All Levels",
     hot: false,
     status: "Past",
-    tags: ["Harvard", "CS50", "Beginner", "Puzzles"],
+    tags: ["Python", "Community", "USA", "Open Source"],
+    registerUrl: "https://us.pycon.org/2025",
   },
   {
     id: 20,
-    name: "TechGig Code Gladiators 2025",
-    organizer: "TechGig / Times Internet",
-    dateRange: "May – Aug 2025",
-    location: "Online (India)",
-    category: "Contest",
+    name: "AI for Good Hackathon 2025",
+    organizer: "UN ITU / AI for Good",
+    dateRange: "Jun 2025",
+    location: "Remote (Global)",
+    category: "Hackathon",
     description:
-      "India's largest coding contest with 300,000+ developers competing across multiple rounds. Tests skills in Java, Python, C++, and more. Industry-recognized contest with direct placement opportunities at top Indian tech firms.",
-    prize: "₹20 Lakh total + placement",
-    participants: 300000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Ongoing",
-    tags: ["India", "TechGig", "Placement", "Large-scale"],
-  },
-  {
-    id: 21,
-    name: "AI/ML Workshop Series — Google Developers",
-    organizer: "Google Developer Groups",
-    dateRange: "Monthly, 2025–2026",
-    location: "Online + City Chapters",
-    category: "Workshop",
-    description:
-      "Google Developer Groups' monthly workshop series covering practical machine learning, TensorFlow, Keras, and Vertex AI. Hands-on labs, codelabs, and study jams guide you from ML basics to production model deployment on Google Cloud.",
-    prize: "Google Cloud credits + certification",
-    difficulty: "Beginner",
-    hot: false,
-    status: "Ongoing",
-    tags: ["Google", "ML", "TensorFlow", "GDG"],
-  },
-  {
-    id: 22,
-    name: "AWS re:Invent Build-on Workshop 2025",
-    organizer: "Amazon Web Services",
-    dateRange: "Dec 2025",
-    location: "Las Vegas + Online",
-    category: "Workshop",
-    description:
-      "AWS re:Invent's flagship hands-on workshop track covering serverless, containers, generative AI, and DevOps on AWS. Build real cloud architectures with expert AWS developers. Access to deep-dive labs not available anywhere else.",
-    prize: "AWS credits + certification vouchers",
-    participants: 50000,
+      "The United Nations ITU's prestigious AI hackathon challenging developers to use artificial intelligence for solving global challenges like climate change, healthcare access, education equity, and food security. Projects are mentored by UN AI experts and winning teams get the opportunity to present at the ITU AI for Good Global Summit.",
+    prize: "$15,000 prize pool",
+    participants: 8000,
     difficulty: "Intermediate",
     hot: true,
     status: "Upcoming",
-    tags: ["AWS", "Cloud", "Serverless", "DevOps"],
-  },
-  {
-    id: 23,
-    name: "Web Dev Bootcamp — freeCodeCamp 2025",
-    organizer: "freeCodeCamp",
-    dateRange: "Rolling 2025",
-    location: "Online (Global)",
-    category: "Workshop",
-    description:
-      "freeCodeCamp's structured bootcamp-style workshop series covering full stack web development — HTML/CSS, JavaScript, React, Node.js, and databases. 100% free with certifications upon completion. Join a global community of learners.",
-    prize: "Free certifications",
-    participants: 1000000,
-    difficulty: "Beginner",
-    hot: false,
-    status: "Ongoing",
-    tags: ["freeCodeCamp", "Web Dev", "Free", "Certificate"],
-  },
-  {
-    id: 24,
-    name: "Blockchain Fundamentals Workshop — Ethereum.org",
-    organizer: "Ethereum Foundation",
-    dateRange: "Q2–Q3 2025",
-    location: "Online",
-    category: "Workshop",
-    description:
-      "Ethereum Foundation's official workshop series for developers entering Web3. Covers Solidity basics, smart contract development, ERC standards, and DApp deployment. Hands-on coding exercises with Hardhat and Foundry toolchains.",
-    prize: "POAP badges + community recognition",
-    difficulty: "Beginner",
-    hot: false,
-    status: "Upcoming",
-    tags: ["Ethereum", "Solidity", "Web3", "Beginner"],
+    tags: ["AI", "UN", "Social Impact", "Climate", "Healthcare"],
+    registerUrl: "https://aiforgood.itu.int",
   },
 ];
 
 const CATEGORY_STYLES: Record<string, string> = {
-  Hackathon: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  Contest: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-  Workshop: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  Hackathon: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+  Contest: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  Conference: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  Workshop: "bg-orange-500/20 text-orange-300 border-orange-500/30",
 };
 
 const DIFFICULTY_STYLES: Record<string, string> = {
@@ -432,6 +409,7 @@ export default function EventsPage() {
     "All",
     "Hackathon",
     "Contest",
+    "Conference",
     "Workshop",
   ];
   const statuses: EventStatus[] = ["All", "Upcoming", "Ongoing", "Past"];
@@ -464,7 +442,7 @@ export default function EventsPage() {
             🎤 Events &amp; Opportunities
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            2025–2026 hackathons, contests &amp; workshops · {EVENTS.length}{" "}
+            2025–2026 hackathons, contests &amp; conferences · {EVENTS.length}{" "}
             events
           </p>
         </div>
@@ -571,9 +549,12 @@ export default function EventsPage() {
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3 shrink-0" /> {event.dateRange}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 min-w-0">
                     <MapPin className="w-3 h-3 shrink-0" />
-                    <span className="truncate max-w-[160px] sm:max-w-none">
+                    <span
+                      className="truncate max-w-[140px] sm:max-w-[220px]"
+                      title={event.location}
+                    >
                       {event.location}
                     </span>
                   </span>
@@ -606,24 +587,41 @@ export default function EventsPage() {
                   </div>
                 )}
 
-                {/* Prize + action */}
-                <div className="flex items-center justify-between gap-2">
+                {/* Prize + action buttons */}
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   {event.prize ? (
-                    <span className="text-xs font-semibold text-primary flex items-center gap-1 truncate">
-                      <Trophy className="w-3 h-3 shrink-0" /> {event.prize}
+                    <span className="text-xs font-medium text-primary flex items-center gap-1 min-w-0 flex-wrap">
+                      <Trophy className="w-3 h-3 shrink-0" />
+                      <span className="break-words">{event.prize}</span>
                     </span>
                   ) : (
                     <span />
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    data-ocid={`events.register.button.${i + 1}`}
-                    className="h-8 text-xs rounded-full px-3 shrink-0 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground"
-                    onClick={() => setSelectedEvent(event)}
-                  >
-                    <Info className="w-3 h-3 mr-1" /> Learn More
-                  </Button>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      data-ocid={`events.learn_more.button.${i + 1}`}
+                      className="h-7 text-xs rounded-full px-2.5 border-border hover:border-primary/40"
+                      onClick={() => setSelectedEvent(event)}
+                    >
+                      <Info className="w-3 h-3 mr-1" /> Details
+                    </Button>
+                    <Button
+                      size="sm"
+                      data-ocid={`events.register.button.${i + 1}`}
+                      className="h-7 text-xs rounded-full px-2.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() =>
+                        window.open(
+                          event.registerUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        )
+                      }
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" /> Register
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -638,7 +636,7 @@ export default function EventsPage() {
                 onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                 className="rounded-full gap-2 text-sm"
               >
-                Load More Events ({filtered.length - visibleCount} more events)
+                Load More Events ({filtered.length - visibleCount} more)
               </Button>
             </div>
           )}
@@ -696,6 +694,11 @@ export default function EventsPage() {
                     >
                       {selectedEvent.status}
                     </Badge>
+                    {selectedEvent.hot && (
+                      <Badge className="text-xs bg-red-500/20 text-red-300 border border-red-500/30">
+                        🔥 Hot
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <button
@@ -712,31 +715,46 @@ export default function EventsPage() {
               {/* Event details */}
               <div className="space-y-3 text-sm">
                 <div className="flex flex-col gap-1.5 text-muted-foreground">
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-start gap-2">
                     <span className="font-semibold text-foreground/80 w-20 shrink-0">
                       Organizer
                     </span>
-                    {selectedEvent.organizer}
+                    <span>{selectedEvent.organizer}</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-start gap-2">
                     <span className="font-semibold text-foreground/80 w-20 shrink-0">
                       Dates
                     </span>
-                    {selectedEvent.dateRange}
+                    <span>{selectedEvent.dateRange}</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-start gap-2">
                     <span className="font-semibold text-foreground/80 w-20 shrink-0">
                       Location
                     </span>
-                    {selectedEvent.location}
+                    <span className="break-words">
+                      {selectedEvent.location}
+                    </span>
                   </span>
                   {selectedEvent.prize && (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-start gap-2">
                       <span className="font-semibold text-foreground/80 w-20 shrink-0">
                         Prize
                       </span>
-                      <span className="text-primary font-medium">
+                      <span className="text-primary font-medium break-words">
                         {selectedEvent.prize}
+                      </span>
+                    </span>
+                  )}
+                  {selectedEvent.participants && (
+                    <span className="flex items-start gap-2">
+                      <span className="font-semibold text-foreground/80 w-20 shrink-0">
+                        Participants
+                      </span>
+                      <span>
+                        {selectedEvent.participants >= 1000
+                          ? `${Math.round(selectedEvent.participants / 1000)}K+`
+                          : selectedEvent.participants}{" "}
+                        expected
                       </span>
                     </span>
                   )}
@@ -748,21 +766,47 @@ export default function EventsPage() {
                   </p>
                 </div>
 
-                <div className="border-t border-border pt-3">
-                  <p className="text-xs text-muted-foreground italic">
-                    💡 Search for "{selectedEvent.name}" on the web or check the
-                    organizer's official website to register or learn more.
-                  </p>
-                </div>
+                {selectedEvent.tags.length > 0 && (
+                  <div className="border-t border-border pt-3">
+                    <div className="flex flex-wrap gap-1">
+                      {selectedEvent.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <Button
-                className="w-full mt-4 rounded-full"
-                data-ocid="events.confirm_button"
-                onClick={() => setSelectedEvent(null)}
-              >
-                Got it
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-full"
+                  data-ocid="events.cancel_button"
+                  onClick={() => setSelectedEvent(null)}
+                >
+                  Close
+                </Button>
+                <Button
+                  className="flex-1 rounded-full gap-1.5"
+                  data-ocid="events.confirm_button"
+                  onClick={() => {
+                    window.open(
+                      selectedEvent.registerUrl,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                    setSelectedEvent(null);
+                  }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Register / Learn More
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}

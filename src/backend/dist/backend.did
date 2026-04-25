@@ -18,6 +18,18 @@ type UserProfile =
    xp: nat;
  };
 type Timestamp = int;
+type Story = 
+ record {
+   authorId: principal;
+   caption: opt text;
+   createdAt: Timestamp;
+   expiresAt: Timestamp;
+   id: text;
+   mediaType: text;
+   mediaUrl: text;
+   viewCount: nat;
+   viewerIds: vec principal;
+ };
 type Review = 
  record {
    id: text;
@@ -26,6 +38,13 @@ type Review =
    timestamp: Timestamp;
    universityName: text;
    username: text;
+ };
+type Reaction = 
+ record {
+   emoji: text;
+   messageId: text;
+   timestamp: Timestamp;
+   userId: principal;
  };
 type Question = 
  record {
@@ -80,6 +99,12 @@ type MockTestResult =
    totalQuestions: nat;
    userId: principal;
  };
+type MessageStatus = 
+ variant {
+   delivered;
+   read;
+   sent;
+ };
 type Message = 
  record {
    role: text;
@@ -89,21 +114,20 @@ type Message =
 type HttpResponse = 
  record {
    body: blob;
-   headers: vec record {
-                  text;
-                  text;
-                };
+   headers: vec HttpHeader;
    status_code: nat16;
  };
 type HttpRequest = 
  record {
    body: blob;
-   headers: vec record {
-                  text;
-                  text;
-                };
+   headers: vec HttpHeader;
    method: text;
    url: text;
+ };
+type HttpHeader = 
+ record {
+   name: text;
+   value: text;
  };
 type Experience = 
  record {
@@ -136,6 +160,19 @@ type Conversation =
    participants: vec principal;
    unreadCount: nat;
  };
+type ChallengeView = 
+ record {
+   challengee: text;
+   challengeeScore: opt nat;
+   challenger: text;
+   challengerScore: nat;
+   createdAt: Timestamp;
+   expiresAt: Timestamp;
+   id: text;
+   quizId: text;
+   quizTopic: text;
+   status: text;
+ };
 type Article = 
  record {
    authorId: principal;
@@ -157,17 +194,27 @@ type AIChatMessage =
  };
 service : {
   addMessage: (role: text, "text": text) -> ();
+  addReaction: (messageId: text, emoji: text) -> ();
   addSampleQuestions: () -> ();
   awardBadge: (badgeId: text) -> ();
   awardGCoins: (amount: nat) -> (nat);
+  checkSeasonalMilestone: (domain: text, moduleIndex: nat) ->
+   (opt text) query;
   completeTopic: (topicId: text) -> ();
+  createStory: (mediaUrl: text, mediaType: text, caption: opt text) ->
+   (Story);
   deleteNote: (noteId: text) -> (bool);
+  deleteStory: (storyId: text) -> ();
   dislikeArticle: (id: text) -> (bool);
   enrollCourse: (courseId: text) -> (EnrollResult);
   followUser: (targetId: text) -> (bool);
+  getActiveChallenges: () -> (vec ChallengeView) query;
+  getActiveStories: () -> (vec Story) query;
   getAllStats: () -> (UserProfile) query;
   getAllTestResults: () -> (vec MockTestResult) query;
   getArticles: (status: text) -> (vec Article) query;
+  getChallengeById: (id: text) -> (opt ChallengeView) query;
+  getChallengeHistory: () -> (vec ChallengeView) query;
   getConversations: () -> (vec Conversation) query;
   getDomainTestResults: (domain: text) -> (vec MockTestResult) query;
   getEnrolledCourses: () -> (vec CourseId) query;
@@ -175,6 +222,7 @@ service : {
   getGCoins: () -> (nat) query;
   getHistory: () -> (vec Message) query;
   getLatestReviews: (limit: nat) -> (vec Review) query;
+  getMessageStatus: (messageId: text) -> (MessageStatus) query;
   getMessages: (otherUser: principal) -> (vec DirectMessage) query;
   getMockTestResults: () -> (vec MockTestResult) query;
   getMyFollowers: () -> (vec text) query;
@@ -183,28 +231,38 @@ service : {
   getOrCreateProfile: (username: text) -> (UserProfile);
   getProgressReport: () -> (ProgressReport) query;
   getQuestionsByTopic: (topic: text) -> (vec Question) query;
+  getReactions: (messageId: text) -> (vec Reaction) query;
   getReviews: () -> (vec Review) query;
+  getSavedMessages: () -> (vec text) query;
   getTestLeaderboard: (domain: text, limit: nat) ->
    (vec record {
           principal;
           nat;
         }) query;
+  getUnlockedSeasonalItems: () -> (vec text) query;
   getUnreadCount: () -> (nat) query;
   http_request: (req: HttpRequest) -> (HttpResponse) query;
   incrementArticleView: (id: text) -> (bool);
   isFollowingUser: (targetId: text) -> (bool) query;
   likeArticle: (id: text) -> (bool);
+  markDelivered: (messageId: text) -> ();
   markMessagesRead: (otherUser: principal) -> ();
   proxyAIChat: (messages: vec AIChatMessage, systemPrompt: text) -> (text);
+  recordModuleCompletion: (domain: text, moduleIndex: nat) -> (opt text);
+  removeReaction: (messageId: text) -> ();
   saveDomainTestResult: (domain: text, score: nat, maxScore: nat,
    timeSpentSecs: nat, answers: vec nat) -> (text);
+  saveMessage: (messageId: text) -> ();
   saveMockTestResult: (testId: text, score: nat, totalQuestions: nat,
    timeTaken: nat, answers: vec text) -> (MockTestResult);
   saveNote: (title: text, content: text, topicId: text) -> (Note);
+  sendChallenge: (challengeeId: principal, quizId: text, quizTopic: text,
+   challengerScore: nat) -> (ChallengeView);
   sendDirectMessage: (receiverId: principal, content: text) -> (text);
   sendVerificationEmail: (email: text) -> ();
   submitArticle: (title: text, content: text, tags: vec text, authorName:
    text) -> (Article);
+  submitChallengeScore: (challengeId: text, score: nat) -> (bool);
   submitExperience: (authorName: text, company: text, role: text, difficulty:
    text, experienceText: text) -> (Experience);
   submitReview: (username: text, universityName: text, rating: nat, "text":
@@ -214,7 +272,9 @@ service : {
              });
   unenrollCourse: (courseId: text) -> (EnrollResult);
   unfollowUser: (targetId: text) -> (bool);
+  unsaveMessage: (messageId: text) -> ();
   updateCompanion: (name: text, personality: Personality) -> ();
   updateNote: (noteId: text, title: text, content: text) -> (opt Note);
   verifyEmail: (email: text, code: text) -> (VerifyResult);
+  viewStory: (storyId: text) -> ();
 }

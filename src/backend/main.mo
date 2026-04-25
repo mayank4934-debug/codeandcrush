@@ -9,7 +9,7 @@ import Principal "mo:core/Principal";
 import Int "mo:core/Int";
 
 // Migration
-import Migration "migration";
+
 
 // New domain mixins
 import EnrollmentApi "mixins/enrollment-api";
@@ -24,6 +24,8 @@ import GCoinsApi "mixins/gcoins-api";
 import MockTestsApi "mixins/mockTests-api";
 import FollowsApi "mixins/follows-api";
 import MessagingApi "mixins/messaging-api";
+import ChallengesApi "mixins/challenges-api";
+import SocialMediaApi "mixins/socialMedia-api";
 
 // New domain types
 import MessagingTypes "types/messaging";
@@ -34,23 +36,27 @@ import NoteTypes "types/notes";
 import ArticleTypes "types/articles";
 import ExperienceTypes "types/experiences";
 import MockTestTypes "types/mockTests";
+import ChallengeTypes "types/challenges";
+import SocialMediaTypes "types/socialMedia";
 
 
 
-(with migration = Migration.run)
+
 actor {
 
   // ── HTTP interface types (IC HTTP gateway standard) ──────────────────────────
+  type HttpHeader = { name : Text; value : Text };
+
   type HttpRequest = {
     method : Text;
     url : Text;
-    headers : [(Text, Text)];
+    headers : [HttpHeader];
     body : Blob;
   };
 
   type HttpResponse = {
     status_code : Nat16;
-    headers : [(Text, Text)];
+    headers : [HttpHeader];
     body : Blob;
   };
 
@@ -70,89 +76,39 @@ actor {
     let baseUrl : Text = "https://codeWithcrush.caffeine.xyz";
 
     if (path == "/sitemap.xml") {
-      let today = "2026-04-22";
+      let today = "2026-04-24";
       let xml : Text =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" #
-        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>daily</changefreq>\n" #
-        "    <priority>1.0</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/study</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.9</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/roadmap</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.9</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/problems</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.9</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/dashboard</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.8</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/events</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.8</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/documentation</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.8</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/compiler</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>monthly</changefreq>\n" #
-        "    <priority>0.7</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/code-visualizer</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>monthly</changefreq>\n" #
-        "    <priority>0.7</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/practice-programs</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>weekly</changefreq>\n" #
-        "    <priority>0.7</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/profile</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>monthly</changefreq>\n" #
-        "    <priority>0.6</priority>\n" #
-        "  </url>\n" #
-        "  <url>\n" #
-        "    <loc>" # baseUrl # "/#/social-feed</loc>\n" #
-        "    <lastmod>" # today # "</lastmod>\n" #
-        "    <changefreq>daily</changefreq>\n" #
-        "    <priority>0.7</priority>\n" #
-        "  </url>\n" #
-        "</urlset>\n";
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" #
+        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">" #
+        "<url><loc>" # baseUrl # "/</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>" #
+        "<url><loc>" # baseUrl # "/#study</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>" #
+        "<url><loc>" # baseUrl # "/#roadmap</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>" #
+        "<url><loc>" # baseUrl # "/#problems</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>" #
+        "<url><loc>" # baseUrl # "/#dashboard</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
+        "<url><loc>" # baseUrl # "/#events</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
+        "<url><loc>" # baseUrl # "/#documentation</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
+        "<url><loc>" # baseUrl # "/#compiler</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>" #
+        "<url><loc>" # baseUrl # "/#visualizer</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>" #
+        "<url><loc>" # baseUrl # "/#practice</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>" #
+        "<url><loc>" # baseUrl # "/#profile</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>" #
+        "<url><loc>" # baseUrl # "/#social</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>" #
+        "<url><loc>" # baseUrl # "/#leaderboard</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>" #
+        "<url><loc>" # baseUrl # "/#notes</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>" #
+        "<url><loc>" # baseUrl # "/#avatar</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>" #
+        "<url><loc>" # baseUrl # "/#messages</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>" #
+        "<url><loc>" # baseUrl # "/#online-test</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
+        "<url><loc>" # baseUrl # "/#quiz</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
+        "<url><loc>" # baseUrl # "/#about</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
+        "<url><loc>" # baseUrl # "/#privacy</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
+        "<url><loc>" # baseUrl # "/#terms</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
+        "<url><loc>" # baseUrl # "/#ethics</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
+        "</urlset>";
       return {
         status_code = 200 : Nat16;
         headers = [
-          ("Content-Type", "application/xml; charset=utf-8"),
-          ("Cache-Control", "public, max-age=86400"),
-          ("Access-Control-Allow-Origin", "*"),
+          { name = "Content-Type"; value = "application/xml" },
+          { name = "Cache-Control"; value = "public, max-age=3600" },
+          { name = "Access-Control-Allow-Origin"; value = "*" },
         ];
         body = xml.encodeUtf8();
       };
@@ -166,9 +122,9 @@ actor {
       return {
         status_code = 200 : Nat16;
         headers = [
-          ("Content-Type", "text/plain; charset=utf-8"),
-          ("Cache-Control", "public, max-age=86400"),
-          ("Access-Control-Allow-Origin", "*"),
+          { name = "Content-Type"; value = "text/plain; charset=utf-8" },
+          { name = "Cache-Control"; value = "public, max-age=86400" },
+          { name = "Access-Control-Allow-Origin"; value = "*" },
         ];
         body = robots.encodeUtf8();
       };
@@ -176,7 +132,7 @@ actor {
 
     {
       status_code = 404 : Nat16;
-      headers = [("Content-Type", "text/plain")];
+      headers = [{ name = "Content-Type"; value = "text/plain" }];
       body = "Not found".encodeUtf8();
     };
   };
@@ -268,6 +224,17 @@ actor {
   // Messaging state: keyed by conversationId (sorted pair of principal texts)
   let directMessagesMap = Map.empty<Text, List.List<MessagingTypes.DirectMessage>>();
 
+  // Social-media state
+  let reactionsStore     = Map.empty<Text, List.List<SocialMediaTypes.Reaction>>();
+  let storiesStore       = List.empty<SocialMediaTypes.Story>();
+  let savedMessagesStore = Map.empty<Principal, List.List<SocialMediaTypes.SavedMessage>>();
+  let messageStatusStore = Map.empty<Text, SocialMediaTypes.MessageStatusRecord>();
+
+  // Challenges state
+  let challengesList = List.empty<ChallengeTypes.Challenge>();
+  var challengeCounter = { var value : Nat = 0 };
+  let seasonalMilestonesList = List.empty<ChallengeTypes.SeasonalMilestone>();
+
   // Include new domain mixins
   include EnrollmentApi(enrollments);
   include ReviewsApi(reviews);
@@ -281,6 +248,8 @@ actor {
   include MockTestsApi(mockTestResultsMap);
   include FollowsApi(followingMap, followersMap);
   include MessagingApi(directMessagesMap);
+  include ChallengesApi(challengesList, challengeCounter, seasonalMilestonesList);
+  include SocialMediaApi(reactionsStore, storiesStore, savedMessagesStore, messageStatusStore);
 
   // ── Existing methods (unchanged) ────────────────────────────────────────────
 

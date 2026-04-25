@@ -78,20 +78,22 @@ function AppRouter() {
       {showExpiredBanner && (
         <SessionExpiredBanner onDismiss={() => setShowExpiredBanner(false)} />
       )}
-      {page === "landing" && <LandingPage />}
-      {page === "onboarding" && <OnboardingPage />}
-      {page === "study" && <StudyApp />}
-      {page === "problems" && <ProblemsPage />}
-      {page === "dashboard" && <DashboardPage />}
-      {page === "events" && <EventsPage />}
-      {page === "code-visualizer" && <CodeVisualizationPage />}
-      {page === "compiler" && <CompilerPage />}
-      {page === "practice-programs" && <PracticeProgramsPage />}
-      {page === "documentation" && (
-        <DocumentationHub onBack={() => setPage("problems")} />
-      )}
-      {page === "profile" && <UserProfilePage />}
-      {page === "social-feed" && <SocialFeedPage />}
+      <div className="flex-1 flex flex-col min-h-0 w-full">
+        {page === "landing" && <LandingPage />}
+        {page === "onboarding" && <OnboardingPage />}
+        {page === "study" && <StudyApp />}
+        {page === "problems" && <ProblemsPage />}
+        {page === "dashboard" && <DashboardPage />}
+        {page === "events" && <EventsPage />}
+        {page === "code-visualizer" && <CodeVisualizationPage />}
+        {page === "compiler" && <CompilerPage />}
+        {page === "practice-programs" && <PracticeProgramsPage />}
+        {page === "documentation" && (
+          <DocumentationHub onBack={() => setPage("problems")} />
+        )}
+        {page === "profile" && <UserProfilePage />}
+        {page === "social-feed" && <SocialFeedPage />}
+      </div>
       <LoveCallModal />
       <Toaster />
     </>

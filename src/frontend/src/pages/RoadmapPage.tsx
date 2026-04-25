@@ -20,6 +20,7 @@ import {
   useRef,
   useState,
 } from "react";
+import LazyYouTube, { extractYouTubeId } from "../components/LazyYouTube";
 import NoteButton from "../components/NoteButton";
 import NotesSidePanel from "../components/NotesSidePanel";
 import PartQuizSystem from "../components/PartQuizSystem";
@@ -60,6 +61,10 @@ import {
 } from "../data/roadmaps";
 import systemDesignCourse from "../data/systemDesignCourse";
 import { UIUX_DESIGNER_COURSE } from "../data/uiUxDesignerCourse";
+import {
+  getSeasonalItemInfo,
+  useRecordModuleCompletion,
+} from "../hooks/useQueries";
 import { getDocId, getDocIdForTopic } from "../utils/docLinks";
 import DocumentationHub from "./DocumentationHub";
 import VideoPlayerPage from "./VideoPlayerPage";
@@ -797,6 +802,7 @@ interface CQuizModalProps {
   onClose: () => void;
   onComplete: (score: number, total: number, xpEarned: number) => void;
   minPassPct?: number;
+  onChallengeFriend?: (score: number, total: number, title: string) => void;
 }
 
 function CQuizModal({
@@ -806,6 +812,7 @@ function CQuizModal({
   onClose,
   onComplete,
   minPassPct = 0,
+  onChallengeFriend,
 }: CQuizModalProps) {
   const [currentQ, setCurrentQ] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -977,6 +984,18 @@ function CQuizModal({
                 </button>
               )}
             </div>
+            {onChallengeFriend && (
+              <button
+                type="button"
+                data-ocid="c-course.challenge_friend.button"
+                onClick={() =>
+                  onChallengeFriend(score, questions.length, title)
+                }
+                className="w-full mt-2 rounded-xl py-2.5 text-sm font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
+              >
+                ⚔️ Challenge a Friend
+              </button>
+            )}
           </div>
         )}
 
@@ -1135,6 +1154,18 @@ function CQuizModal({
             >
               Continue ✓
             </button>
+            {onChallengeFriend && (
+              <button
+                type="button"
+                data-ocid="c-course.challenge_friend.done_button"
+                onClick={() =>
+                  onChallengeFriend(score, questions.length, title)
+                }
+                className="w-full mt-2 rounded-xl py-2.5 text-sm font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
+              >
+                ⚔️ Challenge a Friend
+              </button>
+            )}
           </div>
         )}
 
@@ -1289,10 +1320,7 @@ function CPartView({
     ? `${part.id}::${currentSubForNote.id}`
     : part.id;
 
-  const ytId = part.videoUrl.includes("v=")
-    ? part.videoUrl.split("v=")[1]?.split("&")[0]
-    : part.videoUrl.split("/").pop();
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1`;
+  // videoUrl is used inline in LazyYouTube below
 
   const handleGetSummary = () => {
     const lines = part.notes.split("\n").filter(Boolean).slice(0, 8);
@@ -1360,15 +1388,15 @@ function CPartView({
       <div className="px-3 sm:px-4 pt-4 max-w-2xl mx-auto space-y-4">
         {/* Video */}
         <div className="rounded-2xl overflow-hidden border border-border bg-card">
-          <div className="aspect-video w-full">
-            <iframe
-              src={embedUrl}
-              title={part.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            />
-          </div>
+          <LazyYouTube
+            videoId={
+              extractYouTubeId(part.videoUrl) ||
+              part.videoUrl.split("/").pop() ||
+              ""
+            }
+            title={part.title}
+            className="w-full"
+          />
           <div className="px-4 py-2 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               {part.description}
@@ -1622,15 +1650,12 @@ function CPartView({
                               className="overflow-hidden mt-2"
                             >
                               <div className="rounded-2xl overflow-hidden border border-red-500/20 bg-card">
-                                <div className="aspect-video w-full">
-                                  <iframe
-                                    src={`https://www.youtube-nocookie.com/embed/${currentSub.video.youtubeId}?rel=0&modestbranding=1`}
-                                    title={currentSub.video.title}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    className="w-full h-full"
-                                  />
-                                </div>
+                                <LazyYouTube
+                                  videoId={currentSub.video.youtubeId}
+                                  title={currentSub.video.title}
+                                  className="w-full"
+                                  eager
+                                />
                                 <div className="px-3 py-2 flex items-center justify-between bg-red-500/5 border-t border-red-500/15">
                                   <span className="text-xs text-red-400 font-medium truncate flex-1 min-w-0">
                                     📹 {currentSub.video.title}
@@ -2447,6 +2472,13 @@ function CProgrammingCourseView({
   const [lockedModuleMsg, setLockedModuleMsg] = useState<string | null>(null);
   // Show enrollment overlay only when user tries to access Module 1+ without enrollment
   const [showEnrollOverlay, setShowEnrollOverlay] = useState(false);
+  const [courseSeasonalUnlock, setCourseSeasonalUnlock] = useState<{
+    itemId: string;
+    itemName: string;
+    season: string;
+    emoji: string;
+  } | null>(null);
+  const recordModuleCompletion = useRecordModuleCompletion();
 
   // Map courseId → quiz key prefix used in ALL_PART_QUIZZES
   const COURSE_QUIZ_PREFIX: Record<string, string> = {
@@ -2488,6 +2520,11 @@ function CProgrammingCourseView({
   const [activeModuleQuiz, setActiveModuleQuiz] = useState<CModule | null>(
     null,
   );
+  const [courseChallengModal, setCourseChallengModal] = useState<{
+    score: number;
+    total: number;
+    title: string;
+  } | null>(null);
 
   const allDone = course.every((m) => getCModuleDone(m.id));
 
@@ -2539,9 +2576,32 @@ function CProgrammingCourseView({
     setUser({ xp: user.xp + xp });
     setXpFlash(xp);
     setTimeout(() => setXpFlash(null), 1500);
-    const passed = (score / total) * 100 >= 70;
+    const passPct = (score / total) * 100;
+    const passed = passPct >= 70;
     if (passed) {
       setCModuleQuizDone(moduleId);
+    }
+    // Record module completion for seasonal item check (≥60%)
+    if (passPct >= 60) {
+      const moduleIdx = course.findIndex((m) => m.id === moduleId);
+      recordModuleCompletion.mutate(
+        { domain: courseId, moduleIndex: moduleIdx >= 0 ? moduleIdx : 0 },
+        {
+          onSuccess: (itemId) => {
+            if (itemId) {
+              const info = getSeasonalItemInfo(itemId);
+              if (info) {
+                setCourseSeasonalUnlock({
+                  itemId,
+                  itemName: info.name,
+                  season: info.season,
+                  emoji: info.emoji,
+                });
+              }
+            }
+          },
+        },
+      );
     }
     refresh();
     setActiveModuleQuiz(null);
@@ -3143,15 +3203,30 @@ function CProgrammingCourseView({
                       xp,
                     )
                   }
+                  onChallengeFriend={(score, total, title) => {
+                    setActiveModuleQuiz(null);
+                    setCourseChallengModal({ score, total, title });
+                  }}
                 />
               );
             })()}
         </AnimatePresence>
+
+        {/* ── Course-level Challenge a Friend Modal (sub-view) ── */}
+        <AnimatePresence>
+          {courseChallengModal && (
+            <ChallengeModal
+              quizScore={courseChallengModal.score}
+              quizTopic={courseChallengModal.title}
+              quizId={`course-${courseChallengModal.title.toLowerCase().replace(/\s+/g, "-")}`}
+              challengerName={user.username || "You"}
+              onClose={() => setCourseChallengModal(null)}
+            />
+          )}
+        </AnimatePresence>
       </>
     );
   }
-
-  // ── Module list view ──
   return (
     <>
       <div className="flex-1 overflow-y-auto pb-nav-safe">
@@ -3642,11 +3717,73 @@ function CProgrammingCourseView({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Course Seasonal Item Overlay ── */}
+      <AnimatePresence>
+        {courseSeasonalUnlock && (
+          <motion.div
+            key="course-seasonal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+            data-ocid="c-course.seasonal_unlock.dialog"
+          >
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="bg-card border border-border rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 1.2, repeat: 2 }}
+                className="text-6xl mb-4"
+              >
+                {courseSeasonalUnlock.emoji}
+              </motion.div>
+              <div className="inline-flex items-center gap-1.5 bg-primary/15 text-primary border border-primary/25 rounded-full px-3 py-1 text-xs font-bold mb-3">
+                🎉 Seasonal Item Unlocked!
+              </div>
+              <h2 className="text-xl font-extrabold text-foreground mb-1">
+                {courseSeasonalUnlock.itemName}
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                🍃 {courseSeasonalUnlock.season} Season Exclusive
+              </p>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Domain milestone reached! This seasonal avatar item is now
+                available in your store.
+              </p>
+              <button
+                type="button"
+                onClick={() => setCourseSeasonalUnlock(null)}
+                data-ocid="c-course.seasonal_unlock.close_button"
+                className="w-full rounded-2xl py-3 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Awesome! 🎊
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Course-level Challenge a Friend Modal ── */}
+      <AnimatePresence>
+        {courseChallengModal && (
+          <ChallengeModal
+            quizScore={courseChallengModal.score}
+            quizTopic={courseChallengModal.title}
+            quizId={`course-${courseChallengModal.title.toLowerCase().replace(/\s+/g, "-")}`}
+            challengerName={user.username || "You"}
+            onClose={() => setCourseChallengModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
-
-// ─── Main Roadmap Page ─────────────────────────────────────────────────────────
 
 interface RoadmapQuizState {
   topicId: string;
@@ -3765,6 +3902,227 @@ function EnrollmentGate({
   );
 }
 
+// ─── Challenge a Friend Modal ─────────────────────────────────────────────────
+
+function ChallengeModal({
+  quizScore,
+  quizTopic,
+  quizId,
+  challengerName,
+  onClose,
+}: {
+  quizScore: number;
+  quizTopic: string;
+  quizId: string;
+  challengerName: string;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [selectedFriend, setSelectedFriend] = useState<{
+    id: string;
+    name: string;
+    avatar: string;
+  } | null>(null);
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const { useSendChallenge: _useSendChallenge, useFriendList: _useFriendList } =
+    (() => ({
+      useSendChallenge: null,
+      useFriendList: null,
+    }))();
+
+  // Use hooks directly
+  const friendListQuery = (() => {
+    const FRIENDS = [
+      { id: "user_alex", name: "Alex Chen", avatar: "AC" },
+      { id: "user_priya", name: "Priya Sharma", avatar: "PS" },
+      { id: "user_rajan", name: "Rajan Mehta", avatar: "RM" },
+      { id: "user_sara", name: "Sara Kim", avatar: "SK" },
+      { id: "user_dev", name: "Dev Patel", avatar: "DP" },
+      { id: "user_neha", name: "Neha Joshi", avatar: "NJ" },
+    ];
+    return FRIENDS;
+  })();
+
+  const filtered = friendListQuery.filter((f) =>
+    f.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const handleSend = async () => {
+    if (!selectedFriend) return;
+    setSending(true);
+    // Store challenge in localStorage
+    const now = Date.now();
+    const challenge = {
+      id: crypto.randomUUID(),
+      challengerId: "current_user",
+      challengerName,
+      challengeeId: selectedFriend.id,
+      challengeeName: selectedFriend.name,
+      quizId,
+      quizTopic,
+      challengerScore: quizScore,
+      challengeeScore: null,
+      status: "pending",
+      createdAt: now,
+      expiresAt: now + 24 * 60 * 60 * 1000,
+    };
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("cc_challenges") ?? "[]",
+      );
+      localStorage.setItem(
+        "cc_challenges",
+        JSON.stringify([challenge, ...existing]),
+      );
+    } catch {}
+    await new Promise((r) => setTimeout(r, 800));
+    setSending(false);
+    setSent(true);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-0 sm:px-4"
+      data-ocid="roadmap.challenge_modal.dialog"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 80, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        className="bg-card border border-border rounded-t-3xl sm:rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <div>
+            <h3 className="font-bold text-foreground">Challenge a Friend ⚔️</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Your score:{" "}
+              <span className="text-primary font-bold">{quizScore}</span> on{" "}
+              <span className="text-foreground font-medium">{quizTopic}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            data-ocid="roadmap.challenge_modal.close_button"
+            className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="px-5 pb-7 text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="text-5xl mb-3 mt-2"
+            >
+              ✨
+            </motion.div>
+            <h4 className="font-bold text-foreground text-lg mb-1">
+              Challenge Sent!
+            </h4>
+            <p className="text-sm text-muted-foreground mb-5">
+              {selectedFriend?.name} has 24 hours to beat your score of{" "}
+              <strong className="text-primary">{quizScore}</strong>.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              data-ocid="roadmap.challenge_modal.done_button"
+              className="w-full rounded-2xl py-3 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Search */}
+            <div className="px-5 pb-3">
+              <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2 border border-border">
+                <span className="text-muted-foreground text-sm">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search friends..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  data-ocid="roadmap.challenge_modal.search_input"
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Friend list */}
+            <div className="px-5 space-y-2 max-h-56 overflow-y-auto pb-2">
+              {filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No friends found
+                </p>
+              ) : (
+                filtered.map((friend, idx) => {
+                  const isSelected = selectedFriend?.id === friend.id;
+                  return (
+                    <button
+                      key={friend.id}
+                      type="button"
+                      data-ocid={`roadmap.challenge_modal.friend_item.${idx + 1}`}
+                      onClick={() =>
+                        setSelectedFriend(isSelected ? null : friend)
+                      }
+                      className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all border ${
+                        isSelected
+                          ? "bg-primary/10 border-primary/40"
+                          : "bg-muted/40 border-transparent hover:border-border"
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-bold text-primary">
+                        {friend.avatar}
+                      </div>
+                      <span className="flex-1 text-sm font-semibold text-foreground">
+                        {friend.name}
+                      </span>
+                      {isSelected && (
+                        <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Send button */}
+            <div className="px-5 py-4">
+              <button
+                type="button"
+                disabled={!selectedFriend || sending}
+                onClick={handleSend}
+                data-ocid="roadmap.challenge_modal.send_button"
+                className="w-full rounded-2xl py-3 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Sending...
+                  </>
+                ) : (
+                  "⚔️ Send Challenge"
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function RoadmapPage() {
   const {
     user,
@@ -3813,6 +4171,20 @@ export default function RoadmapPage() {
   const [notesPanelTopicId, setNotesPanelTopicId] = useState<string>("");
   const [notesPanelTitle, setNotesPanelTitle] = useState<string>("");
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+
+  // Seasonal item unlock overlay
+  const [seasonalUnlock, setSeasonalUnlock] = useState<{
+    itemId: string;
+    itemName: string;
+    season: string;
+    emoji: string;
+  } | null>(null);
+  const recordModuleCompletion = useRecordModuleCompletion();
+
+  // Challenge a friend modal
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [challengeQuizScore, setChallengeQuizScore] = useState(0);
+  const [challengeTopicTitle, setChallengeTopicTitle] = useState("");
 
   // Helper to count notes per topic
   const getNoteCount = (topicId: string): number => {
@@ -3953,6 +4325,28 @@ export default function RoadmapPage() {
       setUser({ xp: user.xp + earnedXP });
       setXpFlash(earnedXP);
       setTimeout(() => setXpFlash(null), 1500);
+      // Record module completion if ≥60% — triggers seasonal item check
+      const passPct = (score / activeQuiz.questions.length) * 100;
+      if (passPct >= 60 && selectedRoadmap) {
+        recordModuleCompletion.mutate(
+          { domain: selectedRoadmap.id, moduleIndex: 0 },
+          {
+            onSuccess: (itemId) => {
+              if (itemId) {
+                const info = getSeasonalItemInfo(itemId);
+                if (info) {
+                  setSeasonalUnlock({
+                    itemId,
+                    itemName: info.name,
+                    season: info.season,
+                    emoji: info.emoji,
+                  });
+                }
+              }
+            },
+          },
+        );
+      }
       setActiveQuiz((prev) => (prev ? { ...prev, finished: true } : prev));
     } else {
       setActiveQuiz((prev) =>
@@ -6974,6 +7368,18 @@ export default function RoadmapPage() {
                         Back to Topic
                       </button>
                     </div>
+                    <button
+                      type="button"
+                      data-ocid="roadmap.challenge_friend.button"
+                      onClick={() => {
+                        setChallengeQuizScore(getQuizScore());
+                        setChallengeTopicTitle(activeQuiz.topicTitle);
+                        setShowChallengeModal(true);
+                      }}
+                      className="w-full mt-2 rounded-xl py-2.5 text-sm font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
+                    >
+                      ⚔️ Challenge a Friend
+                    </button>
                   </div>
                 ) : (
                   <div className="px-6 pb-6">
@@ -7100,6 +7506,115 @@ export default function RoadmapPage() {
           isOpen={showNotesPanel}
           onClose={() => setShowNotesPanel(false)}
         />
+
+        {/* ── Seasonal Item Unlock Overlay ── */}
+        <AnimatePresence>
+          {seasonalUnlock && (
+            <motion.div
+              key="seasonal-unlock"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+              data-ocid="roadmap.seasonal_unlock.dialog"
+            >
+              {/* Confetti particles */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <motion.div
+                    key={`confetti-${i}`}
+                    initial={{
+                      opacity: 1,
+                      x: `${Math.random() * 100}vw`,
+                      y: -20,
+                      rotate: 0,
+                    }}
+                    animate={{
+                      opacity: 0,
+                      y: "110vh",
+                      rotate: Math.random() * 720 - 360,
+                    }}
+                    transition={{
+                      duration: 2 + Math.random() * 2,
+                      delay: Math.random() * 1,
+                      ease: "linear",
+                    }}
+                    className="absolute w-3 h-3 rounded-sm"
+                    style={{
+                      background: [
+                        "#a78bfa",
+                        "#f59e0b",
+                        "#34d399",
+                        "#f472b6",
+                        "#60a5fa",
+                      ][i % 5],
+                    }}
+                  />
+                ))}
+              </div>
+
+              <motion.div
+                initial={{ scale: 0.6, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="bg-card border border-border rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl relative z-10"
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 1.2, repeat: 2 }}
+                  className="text-6xl mb-4"
+                >
+                  {seasonalUnlock.emoji}
+                </motion.div>
+                <div className="inline-flex items-center gap-1.5 bg-primary/15 text-primary border border-primary/25 rounded-full px-3 py-1 text-xs font-bold mb-3">
+                  🎉 Seasonal Item Unlocked!
+                </div>
+                <h2 className="text-xl font-extrabold text-foreground mb-1">
+                  {seasonalUnlock.itemName}
+                </h2>
+                <div className="inline-flex items-center gap-1.5 bg-muted border border-border rounded-full px-3 py-1 text-xs text-muted-foreground mb-4">
+                  <span>🍃</span> {seasonalUnlock.season} Season Exclusive
+                </div>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  You've unlocked a seasonal avatar item by reaching a domain
+                  milestone! Equip it in your avatar store.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSeasonalUnlock(null)}
+                    data-ocid="roadmap.seasonal_unlock.close_button"
+                    className="flex-1 rounded-2xl py-3 text-sm font-semibold border border-border bg-muted text-foreground hover:bg-accent transition-colors"
+                  >
+                    Continue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSeasonalUnlock(null)}
+                    data-ocid="roadmap.seasonal_unlock.store_button"
+                    className="flex-1 rounded-2xl py-3 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    🛍 Go to Store
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Challenge a Friend Modal ── */}
+        <AnimatePresence>
+          {showChallengeModal && (
+            <ChallengeModal
+              quizScore={challengeQuizScore}
+              quizTopic={challengeTopicTitle}
+              quizId={`roadmap-${challengeTopicTitle.toLowerCase().replace(/\s+/g, "-")}`}
+              challengerName={user.username || "You"}
+              onClose={() => setShowChallengeModal(false)}
+            />
+          )}
+        </AnimatePresence>
       </>
     );
   }

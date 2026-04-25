@@ -5,6 +5,8 @@ export type StoreCategory =
   | "pets"
   | "special";
 
+export type StoreSeason = "spring" | "summer" | "fall" | "winter" | "all";
+
 export interface StoreItem {
   id: string;
   category: StoreCategory;
@@ -13,9 +15,10 @@ export interface StoreItem {
   cost: number;
   description: string;
   unlockXp?: number;
+  season?: StoreSeason;
 }
 
-// ── Outfits (22 items) ────────────────────────────────────────────────────────
+// ── Outfits (25 base + 32 seasonal = 57 items) ───────────────────────────────
 const OUTFITS: StoreItem[] = [
   {
     id: "outfit-casual-tee",
@@ -24,6 +27,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "👕",
     cost: 0,
     description: "Classic everyday tee",
+    season: "all",
   },
   {
     id: "outfit-hoodie",
@@ -32,6 +36,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🧥",
     cost: 10,
     description: "Comfy coder hoodie",
+    season: "all",
   },
   {
     id: "outfit-formal-shirt",
@@ -40,6 +45,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "👔",
     cost: 20,
     description: "Sharp business shirt",
+    season: "all",
   },
   {
     id: "outfit-jersey",
@@ -48,6 +54,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🏃",
     cost: 15,
     description: "Athletic jersey",
+    season: "all",
   },
   {
     id: "outfit-kurta",
@@ -56,6 +63,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🥻",
     cost: 18,
     description: "Elegant ethnic kurta",
+    season: "all",
   },
   {
     id: "outfit-blazer",
@@ -64,6 +72,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🎩",
     cost: 25,
     description: "Professional blazer",
+    season: "all",
   },
   {
     id: "outfit-lab-coat",
@@ -72,6 +81,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🥼",
     cost: 18,
     description: "Science lab coat",
+    season: "all",
   },
   {
     id: "outfit-astronaut",
@@ -81,6 +91,7 @@ const OUTFITS: StoreItem[] = [
     cost: 50,
     description: "Explore the coding cosmos",
     unlockXp: 500,
+    season: "all",
   },
   {
     id: "outfit-dev-hoodie-dark",
@@ -89,6 +100,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🖤",
     cost: 12,
     description: "Midnight black hoodie",
+    season: "all",
   },
   {
     id: "outfit-ninja",
@@ -98,6 +110,7 @@ const OUTFITS: StoreItem[] = [
     cost: 35,
     description: "Stealth mode activated",
     unlockXp: 300,
+    season: "all",
   },
   {
     id: "outfit-superhero",
@@ -107,6 +120,7 @@ const OUTFITS: StoreItem[] = [
     cost: 40,
     description: "Save the code, save the world",
     unlockXp: 400,
+    season: "all",
   },
   {
     id: "outfit-kimono",
@@ -115,6 +129,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🎎",
     cost: 30,
     description: "Elegant traditional kimono",
+    season: "all",
   },
   {
     id: "outfit-dress",
@@ -123,6 +138,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "👗",
     cost: 22,
     description: "Breezy summer dress",
+    season: "all",
   },
   {
     id: "outfit-tracksuit",
@@ -131,6 +147,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🩱",
     cost: 14,
     description: "Athletic tracksuit",
+    season: "all",
   },
   {
     id: "outfit-cardigan",
@@ -139,6 +156,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🧶",
     cost: 12,
     description: "Cozy knit cardigan",
+    season: "all",
   },
   {
     id: "outfit-wizard-robe",
@@ -148,6 +166,7 @@ const OUTFITS: StoreItem[] = [
     cost: 45,
     description: "Wield magical debugging powers",
     unlockXp: 450,
+    season: "all",
   },
   {
     id: "outfit-pirate",
@@ -156,6 +175,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🏴‍☠️",
     cost: 38,
     description: "Arrr, code me timbers!",
+    season: "all",
   },
   {
     id: "outfit-chef",
@@ -164,6 +184,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "👨‍🍳",
     cost: 20,
     description: "Cooking up algorithms",
+    season: "all",
   },
   {
     id: "outfit-graduation",
@@ -172,6 +193,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🎓",
     cost: 30,
     description: "Achievement unlocked",
+    season: "all",
   },
   {
     id: "outfit-santa",
@@ -180,6 +202,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🎅",
     cost: 25,
     description: "Ho ho ho, debugging!",
+    season: "all",
   },
   {
     id: "outfit-tuxedo",
@@ -188,6 +211,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🤵",
     cost: 32,
     description: "James Bond of coders",
+    season: "all",
   },
   {
     id: "outfit-detective",
@@ -196,6 +220,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "🕵️",
     cost: 28,
     description: "Investigating every bug",
+    season: "all",
   },
   {
     id: "outfit-school-uniform",
@@ -204,6 +229,7 @@ const OUTFITS: StoreItem[] = [
     emoji: "📐",
     cost: 15,
     description: "Classic school uniform",
+    season: "all",
   },
   {
     id: "outfit-samurai",
@@ -213,6 +239,7 @@ const OUTFITS: StoreItem[] = [
     cost: 55,
     description: "Code with honor",
     unlockXp: 600,
+    season: "all",
   },
   {
     id: "outfit-knight",
@@ -221,6 +248,303 @@ const OUTFITS: StoreItem[] = [
     emoji: "🛡️",
     cost: 48,
     description: "Protected against every bug",
+    season: "all",
+  },
+
+  // ── Spring Collection ──────────────────────────────────────────────────────
+  {
+    id: "outfit-spring-cherry-blossom",
+    category: "outfits",
+    label: "Cherry Blossom Dress",
+    emoji: "🌸",
+    cost: 28,
+    description: "Blooming pink spring dress",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-garden-party",
+    category: "outfits",
+    label: "Garden Party Outfit",
+    emoji: "🌺",
+    cost: 24,
+    description: "Fresh floral garden look",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-pastel-raincoat",
+    category: "outfits",
+    label: "Pastel Raincoat",
+    emoji: "🌧️",
+    cost: 22,
+    description: "Soft pastel raincoat",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-floral-sundress",
+    category: "outfits",
+    label: "Floral Sundress",
+    emoji: "🌼",
+    cost: 26,
+    description: "Light daisy-print sundress",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-hoodie",
+    category: "outfits",
+    label: "Spring Hoodie",
+    emoji: "🌱",
+    cost: 18,
+    description: "Fresh green spring hoodie",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-butterfly-top",
+    category: "outfits",
+    label: "Butterfly Top",
+    emoji: "🦋",
+    cost: 20,
+    description: "Delicate butterfly-print top",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-tulip-skirt",
+    category: "outfits",
+    label: "Tulip Skirt Set",
+    emoji: "🌷",
+    cost: 30,
+    description: "Elegant tulip-pink skirt set",
+    season: "spring",
+  },
+  {
+    id: "outfit-spring-mint-casual",
+    category: "outfits",
+    label: "Mint Casual",
+    emoji: "🍃",
+    cost: 16,
+    description: "Refreshing mint casual set",
+    season: "spring",
+  },
+
+  // ── Summer Collection ──────────────────────────────────────────────────────
+  {
+    id: "outfit-summer-beach-waves",
+    category: "outfits",
+    label: "Beach Waves Set",
+    emoji: "🏖️",
+    cost: 28,
+    description: "Breezy beach outfit",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-tropical-shirt",
+    category: "outfits",
+    label: "Tropical Shirt",
+    emoji: "🌺",
+    cost: 20,
+    description: "Vibrant tropical print shirt",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-sunset-shorts",
+    category: "outfits",
+    label: "Sunset Board Shorts",
+    emoji: "🌅",
+    cost: 18,
+    description: "Golden sunset board shorts",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-ice-cream",
+    category: "outfits",
+    label: "Ice Cream Outfit",
+    emoji: "🍦",
+    cost: 22,
+    description: "Sweet pastel ice cream look",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-surfboard-tank",
+    category: "outfits",
+    label: "Surfboard Tank",
+    emoji: "🏄",
+    cost: 16,
+    description: "Catch waves and bugs",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-neon",
+    category: "outfits",
+    label: "Neon Summer",
+    emoji: "🎆",
+    cost: 25,
+    description: "Electric neon summer fits",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-festival",
+    category: "outfits",
+    label: "Festival Fit",
+    emoji: "🎵",
+    cost: 30,
+    description: "Music festival boho look",
+    season: "summer",
+  },
+  {
+    id: "outfit-summer-watermelon",
+    category: "outfits",
+    label: "Watermelon Tee",
+    emoji: "🍉",
+    cost: 14,
+    description: "Fun watermelon print tee",
+    season: "summer",
+  },
+
+  // ── Fall Collection ────────────────────────────────────────────────────────
+  {
+    id: "outfit-fall-autumn-coat",
+    category: "outfits",
+    label: "Autumn Leaves Coat",
+    emoji: "🍂",
+    cost: 32,
+    description: "Warm auburn autumn coat",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-pumpkin-spice",
+    category: "outfits",
+    label: "Pumpkin Spice Set",
+    emoji: "🎃",
+    cost: 26,
+    description: "Cozy pumpkin spice outfit",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-cozy-sweater",
+    category: "outfits",
+    label: "Cozy Sweater",
+    emoji: "☕",
+    cost: 22,
+    description: "Warm knit coffee sweater",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-harvest-plaid",
+    category: "outfits",
+    label: "Harvest Plaid",
+    emoji: "🌾",
+    cost: 24,
+    description: "Classic harvest plaid shirt",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-halloween",
+    category: "outfits",
+    label: "Halloween Costume",
+    emoji: "👻",
+    cost: 35,
+    description: "Spooky Halloween costume",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-maple",
+    category: "outfits",
+    label: "Fallen Maple",
+    emoji: "🍁",
+    cost: 28,
+    description: "Maple leaf print set",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-flannel",
+    category: "outfits",
+    label: "Warm Flannel",
+    emoji: "🧣",
+    cost: 18,
+    description: "Soft flannel shirt and scarf",
+    season: "fall",
+  },
+  {
+    id: "outfit-fall-bonfire",
+    category: "outfits",
+    label: "Bonfire Fit",
+    emoji: "🔥",
+    cost: 20,
+    description: "Warm campfire night look",
+    season: "fall",
+  },
+
+  // ── Winter Collection ──────────────────────────────────────────────────────
+  {
+    id: "outfit-winter-snowflake-coat",
+    category: "outfits",
+    label: "Snowflake Coat",
+    emoji: "❄️",
+    cost: 36,
+    description: "Elegant snowflake trench coat",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-ugly-sweater",
+    category: "outfits",
+    label: "Holiday Ugly Sweater",
+    emoji: "🎄",
+    cost: 22,
+    description: "Classic ugly holiday sweater",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-frosty-puffer",
+    category: "outfits",
+    label: "Frosty Puffer",
+    emoji: "🌨️",
+    cost: 28,
+    description: "Thick puffer jacket",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-new-year-glam",
+    category: "outfits",
+    label: "New Year Glam",
+    emoji: "🎉",
+    cost: 40,
+    description: "Sparkling NYE glamour fit",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-ice-skater",
+    category: "outfits",
+    label: "Ice Skater Outfit",
+    emoji: "⛸️",
+    cost: 30,
+    description: "Graceful ice skater costume",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-blizzard",
+    category: "outfits",
+    label: "Blizzard Bundle",
+    emoji: "🌬️",
+    cost: 26,
+    description: "Full snow gear bundle",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-cozy-cabin",
+    category: "outfits",
+    label: "Cozy Cabin",
+    emoji: "🏔️",
+    cost: 24,
+    description: "Mountain cabin cozy set",
+    season: "winter",
+  },
+  {
+    id: "outfit-winter-snowman",
+    category: "outfits",
+    label: "Snowman Suit",
+    emoji: "⛄",
+    cost: 32,
+    description: "Full snowman costume",
+    season: "winter",
   },
 ];
 
@@ -811,6 +1135,40 @@ export const CATEGORY_LABELS: Record<StoreCategory, string> = {
   pets: "🐾 Pets",
   special: "💎 Special",
 };
+
+// ── Season helpers ────────────────────────────────────────────────────────────
+export const SEASON_LABELS: Record<StoreSeason, string> = {
+  all: "All",
+  spring: "🌸 Spring",
+  summer: "☀️ Summer",
+  fall: "🍂 Fall",
+  winter: "❄️ Winter",
+};
+
+export const SEASON_BADGE_COLORS: Record<StoreSeason, string> = {
+  all: "",
+  spring: "bg-pink-500/20 text-pink-400 border-pink-500/30",
+  summer: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  fall: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  winter: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+};
+
+export const SEASON_ICONS: Record<StoreSeason, string> = {
+  all: "",
+  spring: "🌸",
+  summer: "☀️",
+  fall: "🍂",
+  winter: "❄️",
+};
+
+/** Returns the current real-world season */
+export function getCurrentSeason(): StoreSeason {
+  const month = new Date().getMonth() + 1; // 1-12
+  if (month >= 3 && month <= 5) return "spring";
+  if (month >= 6 && month <= 8) return "summer";
+  if (month >= 9 && month <= 11) return "fall";
+  return "winter";
+}
 
 // ── Legacy types (kept for backward compat) ──────────────────────────────────
 export type ClothingSlot = "cap" | "shirt" | "pant" | "shoe" | "accessory";

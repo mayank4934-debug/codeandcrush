@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { CODING_PROBLEMS } from "../data/problems";
 
@@ -23,8 +23,7 @@ function getDateLabel(): string {
 function getMsUntilMidnightUTC(): number {
   const now = Date.now();
   const todayMidnight = Math.floor(now / 86400000) * 86400000;
-  const nextMidnight = todayMidnight + 86400000;
-  return nextMidnight - now;
+  return todayMidnight + 86400000 - now;
 }
 
 function formatCountdown(ms: number): string {
@@ -70,6 +69,229 @@ const MOCK_SOLVERS = [
   { name: "Raj", medal: "🥉" },
 ];
 
+// ─── Isolated Countdown (never triggers parent re-render) ─────────────────────
+const CountdownTimer = memo(function CountdownTimer({
+  solverCount,
+}: {
+  solverCount: number;
+}) {
+  const [ms, setMs] = useState(getMsUntilMidnightUTC);
+
+  useEffect(() => {
+    const id = setInterval(() => setMs(getMsUntilMidnightUTC()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border border-yellow-200 dark:border-yellow-800/50 rounded-2xl p-5 text-center">
+      <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide mb-1">
+        Next challenge in
+      </p>
+      {/* tabular-nums + will-change: contents prevents layout shift on every tick */}
+      <div
+        className="text-4xl sm:text-5xl font-extrabold tabular-nums text-yellow-600 dark:text-yellow-400 mb-2"
+        style={{ willChange: "contents", fontVariantNumeric: "tabular-nums" }}
+        data-ocid="daily.countdown"
+      >
+        {formatCountdown(ms)}
+      </div>
+      <p className="text-xs text-yellow-600/70 dark:text-yellow-500">
+        🔥 Solved by{" "}
+        <strong className="text-yellow-700 dark:text-yellow-400">
+          {solverCount}
+        </strong>{" "}
+        {solverCount === 1 ? "person" : "people"} today
+      </p>
+    </div>
+  );
+});
+
+// ─── Leaderboard with mobile "Show All" toggle ────────────────────────────────
+const Leaderboard = memo(function Leaderboard({
+  isSolved,
+  username,
+}: {
+  isSolved: boolean;
+  username: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggleExpanded = useCallback(() => setExpanded((v) => !v), []);
+
+  return (
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-extrabold text-foreground text-base">
+          Today's Top Solvers
+        </h3>
+        <button
+          onClick={toggleExpanded}
+          type="button"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors sm:hidden"
+          aria-label={expanded ? "Show fewer solvers" : "Show all solvers"}
+          data-ocid="daily.leaderboard_toggle"
+        >
+          {expanded ? (
+            <>
+              Less <ChevronUp className="w-3 h-3" />
+            </>
+          ) : (
+            <>
+              All <ChevronDown className="w-3 h-3" />
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* On mobile: max-h-48 when collapsed, auto when expanded */}
+      <div
+        className={`space-y-2 overflow-hidden transition-all duration-300 ${
+          expanded ? "max-h-none" : "max-h-48 sm:max-h-none"
+        }`}
+        data-ocid="daily.leaderboard"
+      >
+        {MOCK_SOLVERS.map((s, i) => (
+          <div
+            key={s.name}
+            className="flex items-center gap-3 py-2 px-3 rounded-xl bg-muted/40"
+            data-ocid={`daily.leaderboard.item.${i + 1}`}
+          >
+            <span className="text-xl w-7 shrink-0">{s.medal}</span>
+            <span className="font-semibold text-foreground text-sm flex-1">
+              {s.name}
+            </span>
+            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-bold">
+              +50 XP
+            </span>
+          </div>
+        ))}
+        <AnimatePresence>
+          {isSolved && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 py-2 px-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50"
+              data-ocid="daily.leaderboard.you"
+            >
+              <span className="text-xl w-7 shrink-0">🌟</span>
+              <span className="font-semibold text-yellow-700 dark:text-yellow-400 text-sm flex-1">
+                {username || "You"}
+              </span>
+              <span className="text-xs text-yellow-600 dark:text-yellow-400 font-bold">
+                +50 XP
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Overflow indicator when collapsed on mobile */}
+      {!expanded && MOCK_SOLVERS.length > 2 && (
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          className="w-full mt-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors sm:hidden text-center"
+          data-ocid="daily.leaderboard_show_more"
+        >
+          + {MOCK_SOLVERS.length - 2} more solvers
+        </button>
+      )}
+    </div>
+  );
+});
+
+// ─── Code Editor — isolated to prevent re-render from parent state ────────────
+const CodeEditor = memo(function CodeEditor({
+  code,
+  language,
+  onCodeChange,
+  onLanguageChange,
+  onSubmit,
+  showError,
+}: {
+  code: string;
+  language: Language;
+  onCodeChange: (v: string) => void;
+  onLanguageChange: (v: Language) => void;
+  onSubmit: () => void;
+  showError: boolean;
+}) {
+  const lineCount = code.split("\n").length;
+
+  return (
+    <div className="bg-[#1e1e2e] rounded-2xl overflow-hidden border border-border shadow-sm">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <span className="text-xs text-gray-400 ml-2 font-mono">
+            daily_solution
+          </span>
+        </div>
+        <select
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value as Language)}
+          className="bg-white/10 text-gray-300 text-xs rounded-lg px-2 py-1 border border-white/10 outline-none cursor-pointer"
+          data-ocid="daily.language_select"
+        >
+          {LANGUAGES.map((l) => (
+            <option key={l} value={l} className="bg-[#1e1e2e]">
+              {l}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Editor body */}
+      <div className="flex">
+        <div className="px-3 py-4 text-right select-none font-mono text-xs text-gray-600 bg-[#181825] min-w-[2.5rem]">
+          {Array.from({ length: lineCount }, (_, i) => (
+            <div key={i + 1}>{i + 1}</div>
+          ))}
+        </div>
+        <textarea
+          value={code}
+          onChange={(e) => onCodeChange(e.target.value)}
+          className="flex-1 bg-transparent text-gray-100 font-mono text-xs py-4 pr-4 resize-none outline-none leading-5"
+          style={{ minHeight: "200px", lineHeight: "1.25rem" }}
+          spellCheck={false}
+          data-ocid="daily.code_editor"
+        />
+      </div>
+
+      <AnimatePresence>
+        {showError && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="text-xs text-red-400 px-4 pb-2"
+            data-ocid="daily.error_state"
+          >
+            ❌ Please write your solution before submitting.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      <div className="flex justify-end px-4 py-3 border-t border-white/10">
+        <Button
+          onClick={onSubmit}
+          className="rounded-full font-bold text-sm gap-2 px-5"
+          style={{
+            background: "linear-gradient(135deg, #eab308 0%, #f97316 100%)",
+            color: "white",
+          }}
+          data-ocid="daily.submit_button"
+        >
+          ⚡ Submit Challenge
+        </Button>
+      </div>
+    </div>
+  );
+});
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function DailyChallengeProblems({
   onBack,
@@ -81,15 +303,14 @@ export default function DailyChallengeProblems({
   const solvedKey = `cc_daily_solved_${dayStr}`;
   const solversKey = "cc_daily_solvers";
 
-  // Today's problem — deterministic
+  // Today's problem — deterministic, computed once
   const dayIndex = useMemo(
     () => Math.floor(Date.now() / 86400000) % CODING_PROBLEMS.length,
     [],
   );
   const problem = CODING_PROBLEMS[dayIndex];
 
-  // State
-  const [countdown, setCountdown] = useState(getMsUntilMidnightUTC());
+  // State — NO countdown here; it lives in <CountdownTimer>
   const [code, setCode] = useState(STARTER_CODE.JavaScript);
   const [language, setLanguage] = useState<Language>("JavaScript");
   const [isSolved, setIsSolved] = useState(
@@ -100,22 +321,19 @@ export default function DailyChallengeProblems({
   const [solverCount, setSolverCount] = useState(() =>
     Number(localStorage.getItem(solversKey) ?? 0),
   );
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Countdown timer
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setCountdown(getMsUntilMidnightUTC());
-    }, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
 
   // Sync language starter code
   useEffect(() => {
     if (!isSolved) setCode(STARTER_CODE[language]);
   }, [language, isSolved]);
+
+  const handleLanguageChange = useCallback((lang: Language) => {
+    setLanguage(lang);
+  }, []);
+
+  const handleCodeChange = useCallback((v: string) => {
+    setCode(v);
+  }, []);
 
   const handleSubmit = useCallback(() => {
     setSubmitAttempted(true);
@@ -124,22 +342,24 @@ export default function DailyChallengeProblems({
       return;
     }
     setShowError(false);
-
-    // Mark solved
     localStorage.setItem(solvedKey, "1");
     const newCount = solverCount + 1;
     localStorage.setItem(solversKey, String(newCount));
     setSolverCount(newCount);
     setIsSolved(true);
-
-    // Award XP
     setUser({ xp: user.xp + 50 });
   }, [code, solvedKey, solverCount, user.xp, setUser]);
+
+  // Stable ref to prevent scroll-to-top on mount
+  const containerRef = useRef<HTMLDivElement>(null);
 
   if (!problem) return null;
 
   return (
-    <div className="flex-1 min-h-0 bg-background flex flex-col overflow-hidden">
+    <div
+      ref={containerRef}
+      className="flex-1 min-h-0 bg-background flex flex-col overflow-hidden"
+    >
       {/* Header */}
       <header
         className="shrink-0 px-4 py-3 flex items-center gap-3"
@@ -177,28 +397,11 @@ export default function DailyChallengeProblems({
         )}
       </header>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Scrollable body — overflow-y-auto lives here, not on children */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 pb-28">
-          {/* Countdown + Solvers */}
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border border-yellow-200 dark:border-yellow-800/50 rounded-2xl p-5 text-center">
-            <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide mb-1">
-              Next challenge in
-            </p>
-            <div
-              className="text-4xl sm:text-5xl font-extrabold tabular-nums text-yellow-600 dark:text-yellow-400 mb-2"
-              data-ocid="daily.countdown"
-            >
-              {formatCountdown(countdown)}
-            </div>
-            <p className="text-xs text-yellow-600/70 dark:text-yellow-500">
-              🔥 Solved by{" "}
-              <strong className="text-yellow-700 dark:text-yellow-400">
-                {solverCount}
-              </strong>{" "}
-              {solverCount === 1 ? "person" : "people"} today
-            </p>
-          </div>
+          {/* Countdown — isolated component, ticks don't re-render parent */}
+          <CountdownTimer solverCount={solverCount} />
 
           {/* Problem Card */}
           <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
@@ -229,7 +432,6 @@ export default function DailyChallengeProblems({
               {problem.description}
             </p>
 
-            {/* Examples */}
             {problem.examples.slice(0, 2).map((ex, i) => (
               <div
                 key={`ex-${i}`}
@@ -252,7 +454,6 @@ export default function DailyChallengeProblems({
               </div>
             ))}
 
-            {/* Tags */}
             <div className="flex flex-wrap gap-1.5 mt-3">
               {problem.tags.map((tag) => (
                 <span
@@ -264,7 +465,6 @@ export default function DailyChallengeProblems({
               ))}
             </div>
 
-            {/* XP Reward Banner */}
             <div className="mt-4 flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-xl px-4 py-2.5">
               <span className="text-lg">🏆</span>
               <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">
@@ -277,6 +477,7 @@ export default function DailyChallengeProblems({
           <AnimatePresence>
             {isSolved && (
               <motion.div
+                key="solved-banner"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
@@ -296,123 +497,21 @@ export default function DailyChallengeProblems({
             )}
           </AnimatePresence>
 
-          {/* Code Editor */}
+          {/* Code Editor — isolated, stable during countdown ticks */}
           {!isSolved && (
-            <div className="bg-[#1e1e2e] rounded-2xl overflow-hidden border border-border shadow-sm">
-              {/* Language selector */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span className="text-xs text-gray-400 ml-2 font-mono">
-                    daily_solution
-                  </span>
-                </div>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as Language)}
-                  className="bg-white/10 text-gray-300 text-xs rounded-lg px-2 py-1 border border-white/10 outline-none cursor-pointer"
-                  data-ocid="daily.language_select"
-                >
-                  {LANGUAGES.map((l) => (
-                    <option key={l} value={l} className="bg-[#1e1e2e]">
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Editor */}
-              <div className="flex">
-                <div className="px-3 py-4 text-right select-none font-mono text-xs text-gray-600 bg-[#181825] min-w-[2.5rem]">
-                  {code.split("\n").map((_, i) => (
-                    <div key={`ln-${i + 1}`}>{i + 1}</div>
-                  ))}
-                </div>
-                <textarea
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="flex-1 bg-transparent text-gray-100 font-mono text-xs py-4 pr-4 resize-none outline-none leading-5"
-                  style={{ minHeight: "200px", lineHeight: "1.25rem" }}
-                  spellCheck={false}
-                  data-ocid="daily.code_editor"
-                />
-              </div>
-
-              {/* Error */}
-              <AnimatePresence>
-                {showError && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-xs text-red-400 px-4 pb-2"
-                    data-ocid="daily.error_state"
-                  >
-                    ❌ Please write your solution before submitting.
-                  </motion.p>
-                )}
-              </AnimatePresence>
-
-              <div className="flex justify-end px-4 py-3 border-t border-white/10">
-                <Button
-                  onClick={handleSubmit}
-                  className="rounded-full font-bold text-sm gap-2 px-5"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #eab308 0%, #f97316 100%)",
-                    color: "white",
-                  }}
-                  data-ocid="daily.submit_button"
-                >
-                  ⚡ Submit Challenge
-                </Button>
-              </div>
-            </div>
+            <CodeEditor
+              key="editor"
+              code={code}
+              language={language}
+              onCodeChange={handleCodeChange}
+              onLanguageChange={handleLanguageChange}
+              onSubmit={handleSubmit}
+              showError={showError}
+            />
           )}
 
-          {/* Mini Leaderboard */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
-            <h3 className="font-extrabold text-foreground text-base mb-3">
-              Today's Top Solvers
-            </h3>
-            <div className="space-y-2" data-ocid="daily.leaderboard">
-              {MOCK_SOLVERS.map((s, i) => (
-                <div
-                  key={s.name}
-                  className="flex items-center gap-3 py-2 px-3 rounded-xl bg-muted/40"
-                  data-ocid={`daily.leaderboard.item.${i + 1}`}
-                >
-                  <span className="text-xl w-7 shrink-0">{s.medal}</span>
-                  <span className="font-semibold text-foreground text-sm flex-1">
-                    {s.name}
-                  </span>
-                  <span className="text-xs text-yellow-600 dark:text-yellow-400 font-bold">
-                    +50 XP
-                  </span>
-                </div>
-              ))}
-              <AnimatePresence>
-                {isSolved && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50"
-                    data-ocid="daily.leaderboard.you"
-                  >
-                    <span className="text-xl w-7 shrink-0">🌟</span>
-                    <span className="font-semibold text-yellow-700 dark:text-yellow-400 text-sm flex-1">
-                      {user.username || "You"}
-                    </span>
-                    <span className="text-xs text-yellow-600 dark:text-yellow-400 font-bold">
-                      +50 XP
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+          {/* Leaderboard — isolated, mobile-constrained */}
+          <Leaderboard isSolved={isSolved} username={user.username || ""} />
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { backendInterface, Personality } from "../backend.d";
+import { MessageStatus } from "../backend.d";
 
 export const mockBackend: backendInterface = {
   addMessage: async () => undefined,
@@ -223,4 +224,46 @@ export const mockBackend: backendInterface = {
     topicId: "general",
   }),
   verifyEmail: async () => ({ __kind__: "ok" as const, ok: null }),
+  // ── New methods (stubs) ──
+  addReaction: async () => undefined,
+  checkSeasonalMilestone: async () => null,
+  createStory: async () => ({
+    id: "story-1",
+    mediaUrl: "",
+    mediaType: "image",
+    caption: undefined,
+    authorId: "principal-1" as any,
+    createdAt: BigInt(Date.now()),
+    expiresAt: BigInt(Date.now() + 86400000),
+    viewCount: BigInt(0),
+    viewerIds: [],
+  }),
+  deleteStory: async () => undefined,
+  getActiveChallenges: async () => [],
+  getActiveStories: async () => [],
+  getChallengeById: async () => null,
+  getChallengeHistory: async () => [],
+  getMessageStatus: async (): Promise<MessageStatus> => MessageStatus.delivered,
+  getReactions: async () => [],
+  getSavedMessages: async () => [],
+  getUnlockedSeasonalItems: async () => [],
+  markDelivered: async () => undefined,
+  recordModuleCompletion: async () => null,
+  removeReaction: async () => undefined,
+  saveMessage: async () => undefined,
+  sendChallenge: async (_challengeeId, quizId, quizTopic, challengerScore) => ({
+    id: "challenge-mock-1",
+    challenger: "You",
+    challengee: "Friend",
+    quizId,
+    quizTopic,
+    challengerScore,
+    challengeeScore: undefined,
+    status: "pending",
+    createdAt: BigInt(Date.now()),
+    expiresAt: BigInt(Date.now() + 86400000),
+  }),
+  submitChallengeScore: async () => true,
+  unsaveMessage: async () => undefined,
+  viewStory: async () => undefined,
 };

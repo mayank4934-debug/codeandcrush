@@ -50,27 +50,27 @@ const TEAM = [
     role: "Co-Founder & CTO",
     initials: "MA",
     gradient: "from-blue-600 to-cyan-500",
-    bio: "Passionate about building educational technology that makes CS accessible to everyone. Leads the technical vision and product development at codeWithcrush.",
+    bio: "Passionate about building educational technology that makes CS accessible to everyone. Leads the technical vision and product development at Code & Crush.",
     extendedBio:
-      "Passionate about building educational technology that makes CS accessible to everyone. Leads the technical vision and product development at codeWithcrush. His engineering leadership keeps the platform fast, reliable, and always ahead of the curve.",
+      "Passionate about building educational technology that makes CS accessible to everyone. Leads the technical vision and product development at Code & Crush. His engineering leadership keeps the platform fast, reliable, and always ahead of the curve.",
   },
   {
     name: "Kripanshu Wats",
     role: "Co-Founder & CEO",
     initials: "KR",
     gradient: "from-indigo-600 to-purple-500",
-    bio: "Driven by the belief that great education changes lives. Oversees strategy, partnerships, and the overall growth of codeWithcrush.",
+    bio: "Driven by the belief that great education changes lives. Oversees strategy, partnerships, and the overall growth of Code & Crush.",
     extendedBio:
-      "Driven by the belief that great education changes lives. Oversees strategy, partnerships, and the overall growth of codeWithcrush. He shapes the product roadmap and ensures every student who needs the platform can find and use it.",
+      "Driven by the belief that great education changes lives. Oversees strategy, partnerships, and the overall growth of Code & Crush. He shapes the product roadmap and ensures every student who needs the platform can find and use it.",
   },
   {
     name: "Dinesh",
     role: "Chief Marketing Officer (CMO)",
     initials: "DI",
     gradient: "from-sky-600 to-blue-500",
-    bio: "Creative storyteller and marketer who connects codeWithcrush with learners across India. Builds the community one story at a time.",
+    bio: "Creative storyteller and marketer who connects Code & Crush with learners across India. Builds the community one story at a time.",
     extendedBio:
-      "Creative storyteller and marketer who connects codeWithcrush with learners across India. Builds the community one story at a time through compelling campaigns and authentic community initiatives that help students discover their potential.",
+      "Creative storyteller and marketer who connects Code & Crush with learners across India. Builds the community one story at a time through compelling campaigns and authentic community initiatives that help students discover their potential.",
   },
   {
     name: "Vinit",
@@ -86,9 +86,9 @@ const TEAM = [
     role: "Chief Media Strategist (CMS)",
     initials: "BM",
     gradient: "from-orange-500 to-rose-500",
-    bio: "Manages content strategy and media presence for codeWithcrush. Brings the platform's story to life across digital channels.",
+    bio: "Manages content strategy and media presence for Code & Crush. Brings the platform's story to life across digital channels.",
     extendedBio:
-      "Manages content strategy and media presence for codeWithcrush. Brings the platform's story to life across digital channels, ensuring every piece of content resonates with learners and builds a stronger, more engaged community.",
+      "Manages content strategy and media presence for Code & Crush. Brings the platform's story to life across digital channels, ensuring every piece of content resonates with learners and builds a stronger, more engaged community.",
   },
 ];
 
@@ -217,9 +217,10 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
     content: (
       <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
         <p className="text-xs">
-          Welcome to <strong className="text-foreground">codeWithcrush</strong>{" "}
-          — an AI-powered, gamified Computer Science learning platform designed
-          to make your CS education engaging, fun, and emotionally supportive.
+          Welcome to{" "}
+          <strong className="text-foreground">Code &amp; Crush</strong> — an
+          AI-powered, gamified Computer Science learning platform designed to
+          make your CS education engaging, fun, and emotionally supportive.
         </p>
         <p className="text-xs">
           We are committed to protecting your privacy and being transparent
@@ -245,9 +246,9 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
           </ul>
         </div>
         <p className="text-xs italic">
-          By using codeWithcrush, you agree to the practices described in this
-          policy. If you have any questions, contact us at{" "}
-          <strong className="text-foreground">codeWithcrush@gmail.com</strong>.
+          By using Code &amp; Crush, you agree to the practices described in
+          this policy. If you have any questions, contact us at{" "}
+          <strong className="text-foreground">codeandcrush@gmail.com</strong>.
         </p>
       </div>
     ),
@@ -439,8 +440,8 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
     content: (
       <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
         <p className="text-xs">
-          codeWithcrush integrates with these services. No data is sold to any
-          of them:
+          Code &amp; Crush integrates with these services. No data is sold to
+          any of them:
         </p>
         <div className="space-y-1.5">
           {[
@@ -504,7 +505,7 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
             },
             {
               right: "Delete",
-              desc: "Request full account and data deletion at any time by contacting codeWithcrush@gmail.com. We will process requests within 30 days.",
+              desc: "Request full account and data deletion at any time by contacting codeandcrush@gmail.com. We will process requests within 30 days.",
             },
             {
               right: "Opt-Out",
@@ -537,7 +538,7 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
     content: (
       <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
         <p className="text-xs">
-          codeWithcrush is designed for{" "}
+          Code &amp; Crush is designed for{" "}
           <strong className="text-foreground">
             students aged 13 and older
           </strong>
@@ -547,7 +548,7 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
           We do not knowingly collect personal information from children under
           13. If you are a parent or guardian and believe your child under 13
           has provided us with personal information, please contact us at{" "}
-          <strong className="text-foreground">codeWithcrush@gmail.com</strong>{" "}
+          <strong className="text-foreground">codeandcrush@gmail.com</strong>{" "}
           and we will promptly delete it.
         </p>
         <p className="text-xs">
@@ -581,8 +582,8 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
           ))}
         </ul>
         <p className="text-xs">
-          Your continued use of codeWithcrush after changes are posted means you
-          accept the updated policy. We recommend reviewing this page
+          Your continued use of Code &amp; Crush after changes are posted means
+          you accept the updated policy. We recommend reviewing this page
           periodically.
         </p>
       </div>
@@ -600,11 +601,11 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
         </p>
         <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 space-y-2">
           {[
-            { icon: "📧", label: "Email", value: "codeWithcrush@gmail.com" },
+            { icon: "📧", label: "Email", value: "codeandcrush@gmail.com" },
             {
               icon: "🌐",
               label: "Website",
-              value: "codeWithcrush.caffeine.xyz",
+              value: "codeandcrush.app",
             },
           ].map((c) => (
             <div key={c.label} className="flex items-center gap-3">
@@ -625,7 +626,7 @@ const PRIVACY_SECTIONS: PrivacySectionData[] = [
             Effective Date: April 2026
           </p>
           <p className="text-muted-foreground text-xs">
-            Last Updated: April 2026 &nbsp;·&nbsp; codeWithcrush
+            Last Updated: April 2026 &nbsp;·&nbsp; Code &amp; Crush
           </p>
         </div>
       </div>
@@ -696,7 +697,9 @@ function TeamBioCarousel() {
 
           {/* App bar */}
           <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-4 py-2.5 flex items-center justify-between">
-            <span className="text-white font-bold text-sm">codeWithcrush</span>
+            <span className="text-white font-bold text-sm">
+              Code &amp; Crush
+            </span>
             <span className="text-white/70 text-xs">Team</span>
           </div>
 
@@ -791,6 +794,8 @@ export default function LandingPage() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [tosOpen, setTosOpen] = useState(false);
+  const [ethicsOpen, setEthicsOpen] = useState(false);
   const [feedbackPhoto, setFeedbackPhoto] = useState<string>("");
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [contactSent, setContactSent] = useState(false);
@@ -1099,7 +1104,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background font-jakarta">
+    <div className="min-h-screen w-full bg-background">
       {/* ── About Us Modal (CodeQuotient-style) ── */}
       <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-4xl w-full mx-2 sm:mx-auto rounded-2xl p-0 overflow-hidden bg-white border-0 shadow-2xl">
@@ -1151,7 +1156,7 @@ export default function LandingPage() {
                 </DialogTitle>
               </div>
               <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-2xl">
-                The passionate people building codeWithcrush — making CS
+                The passionate people building Code &amp; Crush — making CS
                 education accessible, engaging, and emotionally supportive for
                 every student.
               </p>
@@ -1185,7 +1190,7 @@ export default function LandingPage() {
                     Meet Our Team
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    The passionate people building codeWithcrush
+                    The passionate people building Code &amp; Crush
                   </p>
                 </div>
               </div>
@@ -1240,7 +1245,7 @@ export default function LandingPage() {
                     To make computer science education accessible, engaging, and
                     emotionally supportive for every student — whether
                     they&apos;re just starting out or preparing for top tech
-                    interviews. codeWithcrush is here for every step of your
+                    interviews. Code &amp; Crush is here for every step of your
                     journey.
                   </p>
                 </div>
@@ -1448,7 +1453,7 @@ export default function LandingPage() {
               </DialogTitle>
             </DialogHeader>
             <p className="text-white/80 text-sm mt-1">
-              codeWithcrush · Effective April 2026 · Last Updated: April 2026
+              Code &amp; Crush · Effective April 2026 · Last Updated: April 2026
             </p>
           </div>
 
@@ -1471,8 +1476,8 @@ export default function LandingPage() {
             </div>
             <div className="px-5 pb-5 text-center">
               <p className="text-xs text-slate-400">
-                Last updated: April 2026 · codeWithcrush ·
-                codeWithcrush@gmail.com
+                Last updated: April 2026 · Code &amp; Crush ·
+                codeandcrush@gmail.com
               </p>
             </div>
           </div>
@@ -1505,7 +1510,7 @@ export default function LandingPage() {
       {/* ── Hero Section ── */}
       <section
         id="home"
-        className="relative min-h-screen flex items-center overflow-hidden pt-14 sm:pt-16 hero-gradient"
+        className="relative min-h-[100svh] flex items-center overflow-hidden pt-14 sm:pt-16 hero-gradient w-full"
       >
         <div
           className="absolute inset-0 opacity-10"
@@ -1629,7 +1634,7 @@ export default function LandingPage() {
       {/* ── Features ── */}
       <section
         id="features"
-        className="py-12 sm:py-20 px-4 sm:px-6 bg-card border-y border-border"
+        className="py-12 sm:py-20 px-4 sm:px-6 bg-card border-y border-border w-full"
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -1677,7 +1682,7 @@ export default function LandingPage() {
       {/* ── Problems Preview ── */}
       <section
         id="problems"
-        className="py-12 sm:py-20 px-4 sm:px-6 bg-background"
+        className="py-12 sm:py-20 px-4 sm:px-6 bg-background w-full"
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -1755,7 +1760,7 @@ export default function LandingPage() {
       {/* ── How It Works ── */}
       <section
         id="how-it-works"
-        className="py-12 sm:py-20 px-4 sm:px-6 bg-card border-y border-border"
+        className="py-12 sm:py-20 px-4 sm:px-6 bg-card border-y border-border w-full"
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -2000,7 +2005,7 @@ export default function LandingPage() {
       <section
         id="reviews"
         ref={reviewSectionRef}
-        className="py-12 sm:py-20 px-4 sm:px-6 bg-background"
+        className="py-12 sm:py-20 px-4 sm:px-6 bg-background w-full"
         data-ocid="reviews.section"
       >
         <div className="max-w-7xl mx-auto">
@@ -2120,7 +2125,7 @@ export default function LandingPage() {
       </section>
       <section
         id="interview-experiences"
-        className="py-12 sm:py-20 px-4 sm:px-6 bg-card border-y border-border"
+        className="py-12 sm:py-20 px-4 sm:px-6 bg-card border-y border-border w-full"
         data-ocid="interview_experiences.section"
       >
         <div className="max-w-7xl mx-auto">
@@ -2421,6 +2426,247 @@ export default function LandingPage() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* ── Terms of Service Modal ── */}
+      <Dialog open={tosOpen} onOpenChange={setTosOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-xl md:max-w-2xl w-full mx-2 sm:mx-auto rounded-2xl p-0 overflow-hidden bg-white border-0 shadow-2xl">
+          <div className="relative bg-gradient-to-r from-violet-700 to-indigo-700 px-5 py-6 sm:px-8 text-white">
+            <button
+              type="button"
+              onClick={() => setTosOpen(false)}
+              className="absolute top-4 right-4 text-white/70 hover:text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors"
+              aria-label="Close"
+              data-ocid="tos.close_button"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-extrabold text-white">
+                Terms of Service
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-white/80 text-sm mt-1">
+              Code &amp; Crush · Effective April 2026
+            </p>
+          </div>
+          <div className="px-5 py-3 bg-violet-50 border-b border-violet-100">
+            <p className="text-xs text-violet-800 leading-relaxed">
+              Please read these Terms carefully. By using Code &amp; Crush, you
+              agree to be bound by these Terms of Service.
+            </p>
+          </div>
+          <div className="overflow-y-auto max-h-[65vh] bg-slate-50">
+            <div className="p-4 sm:p-5 space-y-2">
+              {[
+                {
+                  id: "acceptance",
+                  icon: "✅",
+                  title: "1. Acceptance of Terms",
+                  content:
+                    "By accessing or using Code & Crush, you agree to be bound by these Terms of Service and all applicable laws. If you do not agree with any of these terms, you are prohibited from using this platform. These terms apply to all users, including visitors, students, and contributors.",
+                },
+                {
+                  id: "use",
+                  icon: "📱",
+                  title: "2. Use of the Platform",
+                  content:
+                    "Code & Crush grants you a limited, non-exclusive, non-transferable licence to access and use the platform for personal educational purposes. You may not use the platform for commercial purposes, redistribute content, or use automated systems to scrape or access the platform without permission. The platform is intended for users aged 13 and above.",
+                },
+                {
+                  id: "accounts",
+                  icon: "🔐",
+                  title: "3. User Accounts & Security",
+                  content:
+                    "You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately of any unauthorized use of your account. Code & Crush is not liable for any loss resulting from unauthorized access to your account. You may not create accounts for others without their permission or create multiple accounts for disruptive purposes.",
+                },
+                {
+                  id: "ip",
+                  icon: "©️",
+                  title: "4. Intellectual Property",
+                  content:
+                    "All content on Code & Crush — including course materials, documentation, code examples, companion designs, and UI elements — is owned by Code & Crush and protected by intellectual property laws. You may not reproduce, distribute, or create derivative works from our content without prior written consent. User-generated content (reviews, interview experiences) remains owned by you, but you grant Code & Crush a non-exclusive licence to display it.",
+                },
+                {
+                  id: "prohibited",
+                  icon: "🚫",
+                  title: "5. Prohibited Conduct",
+                  content:
+                    "You agree not to: harass, threaten, or harm other users; post false, misleading, or offensive content; attempt to hack, reverse-engineer, or disrupt the platform; use the platform to promote illegal activities; impersonate other users or Code & Crush staff; share your account credentials with others; or upload malware or harmful code. Violations may result in immediate account termination.",
+                },
+                {
+                  id: "ai",
+                  icon: "🤖",
+                  title: "6. AI Content & Accuracy",
+                  content:
+                    "Code & Crush uses AI to provide educational guidance, explanations, and feedback. While we strive for accuracy, AI-generated content may occasionally contain errors. Do not rely solely on AI responses for critical decisions. Code & Crush is not liable for any inaccuracies in AI-generated content. The AI is designed for educational support, not as a substitute for professional advice.",
+                },
+                {
+                  id: "liability",
+                  icon: "⚖️",
+                  title: "7. Limitation of Liability",
+                  content:
+                    "Code & Crush is provided 'as is' without warranties of any kind, either express or implied. To the maximum extent permitted by law, Code & Crush shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the platform. Our total liability shall not exceed the amount you paid (if any) in the 12 months preceding the claim.",
+                },
+                {
+                  id: "termination",
+                  icon: "🔴",
+                  title: "8. Termination",
+                  content:
+                    "Code & Crush reserves the right to terminate or suspend your account at any time for violations of these Terms, without prior notice. You may also terminate your account at any time by contacting us at codeandcrush@gmail.com. Upon termination, your right to use the platform ceases immediately, though certain provisions of these Terms survive termination.",
+                },
+                {
+                  id: "changes",
+                  icon: "📝",
+                  title: "9. Changes to Terms",
+                  content:
+                    "We reserve the right to modify these Terms at any time. We will notify users of significant changes by displaying a notice within the app. Your continued use of Code & Crush after changes are posted constitutes acceptance of the updated Terms. We encourage you to review these Terms periodically.",
+                },
+                {
+                  id: "contact",
+                  icon: "📬",
+                  title: "10. Contact Information",
+                  content:
+                    "For questions about these Terms of Service, contact us at codeandcrush@gmail.com. We aim to respond to all inquiries within 5 business days. Our registered address and full legal entity details are available upon request.",
+                },
+              ].map((section) => (
+                <PrivacyAccordion
+                  key={section.id}
+                  section={{
+                    id: section.id,
+                    icon: section.icon,
+                    title: section.title,
+                    content: (
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {section.content}
+                      </p>
+                    ),
+                  }}
+                />
+              ))}
+            </div>
+            <div className="px-5 pb-5 text-center">
+              <p className="text-xs text-slate-400">
+                Last updated: April 2026 · Code &amp; Crush ·
+                codeandcrush@gmail.com
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Ethics Policy Modal ── */}
+      <Dialog open={ethicsOpen} onOpenChange={setEthicsOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-xl md:max-w-2xl w-full mx-2 sm:mx-auto rounded-2xl p-0 overflow-hidden bg-white border-0 shadow-2xl">
+          <div className="relative bg-gradient-to-r from-emerald-700 to-teal-700 px-5 py-6 sm:px-8 text-white">
+            <button
+              type="button"
+              onClick={() => setEthicsOpen(false)}
+              className="absolute top-4 right-4 text-white/70 hover:text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-white/20 transition-colors"
+              aria-label="Close"
+              data-ocid="ethics.close_button"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-extrabold text-white">
+                Ethics Policy
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-white/80 text-sm mt-1">
+              Code &amp; Crush · Our Commitment to Responsible AI Education
+            </p>
+          </div>
+          <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100">
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              At Code &amp; Crush, ethics guide every product decision. We are
+              committed to building technology that is fair, transparent, and
+              empowering for all learners.
+            </p>
+          </div>
+          <div className="overflow-y-auto max-h-[65vh] bg-slate-50">
+            <div className="p-4 sm:p-5 space-y-2">
+              {[
+                {
+                  id: "ethical-ai",
+                  icon: "🤝",
+                  title: "1. Our Commitment to Ethical AI",
+                  content:
+                    "Code & Crush uses AI to enhance education, not to exploit or manipulate learners. Our AI systems are designed to be helpful, honest, and harmless. We continuously review AI outputs to ensure they provide accurate, educational, and encouraging guidance. We do not use AI to make automated decisions that significantly impact users without human oversight.",
+                },
+                {
+                  id: "data-privacy",
+                  icon: "🔒",
+                  title: "2. Data Privacy in Learning",
+                  content:
+                    "We collect only the minimum data necessary to provide our educational services. Learning progress, quiz scores, and behavioral patterns are used solely to personalize your experience. We do not sell this data, share it with advertisers, or use it for purposes beyond improving your education. Sensitive data stays on your device whenever technically feasible.",
+                },
+                {
+                  id: "bias-fairness",
+                  icon: "⚖️",
+                  title: "3. Bias & Fairness in Content",
+                  content:
+                    "We actively work to identify and reduce biases in our educational content and AI systems. Our curriculum is reviewed to ensure it is inclusive and representative of diverse perspectives in computer science. We welcome feedback from users who identify biased or exclusionary content and commit to addressing such concerns promptly.",
+                },
+                {
+                  id: "accessibility",
+                  icon: "♿",
+                  title: "4. Accessibility for All Learners",
+                  content:
+                    "Code & Crush is committed to being accessible to learners of all abilities. We follow WCAG accessibility guidelines, provide keyboard navigation, maintain adequate color contrast, and support screen readers. Our goal is that no learner should be excluded due to a disability or technical limitation. We continuously improve accessibility based on user feedback.",
+                },
+                {
+                  id: "community",
+                  icon: "🌍",
+                  title: "5. Community Guidelines & Respect",
+                  content:
+                    "We foster a learning community built on mutual respect, kindness, and support. Harassment, discrimination, hate speech, or bullying of any kind is strictly prohibited. We believe every learner deserves encouragement regardless of their background, skill level, gender, religion, nationality, or identity. Community contributions should uplift, not diminish, others.",
+                },
+                {
+                  id: "responsible-ai",
+                  icon: "🛡️",
+                  title: "6. Responsible Use of AI Features",
+                  content:
+                    "Our AI companion is designed to guide and mentor, not to create unhealthy dependency. We build in breaks, mindfulness nudges, and transparent disclaimers so users understand they are interacting with AI. The companion is not a substitute for human connection or professional mental health support. We do not use manipulative design patterns to maximize engagement at the expense of user wellbeing.",
+                },
+                {
+                  id: "transparency",
+                  icon: "🔍",
+                  title: "7. Transparency in AI Decision-Making",
+                  content:
+                    "We are transparent about how our AI systems work. When the AI provides feedback on your code, explains a concept, or adapts its teaching style, we strive to make the reasoning understandable. We clearly label AI-generated content and provide ways for users to understand or question AI outputs. We do not use 'black box' AI systems where we cannot explain outcomes to users.",
+                },
+                {
+                  id: "reporting",
+                  icon: "📣",
+                  title: "8. Reporting Ethical Concerns",
+                  content:
+                    "We take ethical concerns seriously. If you encounter content, behavior, or AI outputs that you believe are harmful, biased, or unethical, please report it to codeandcrush@gmail.com with the subject line 'Ethics Concern'. We commit to reviewing all reports within 7 business days and taking appropriate action. Reporters will be treated with confidentiality and respect.",
+                },
+              ].map((section) => (
+                <PrivacyAccordion
+                  key={section.id}
+                  section={{
+                    id: section.id,
+                    icon: section.icon,
+                    title: section.title,
+                    content: (
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {section.content}
+                      </p>
+                    ),
+                  }}
+                />
+              ))}
+            </div>
+            <div className="px-5 pb-5 text-center">
+              <p className="text-xs text-slate-400">
+                Last updated: April 2026 · Code &amp; Crush ·
+                codeandcrush@gmail.com
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <footer
         className="relative bg-card border-t border-border pt-12 pb-8 px-4 sm:px-6 lg:px-8"
         data-ocid="footer.section"
@@ -2451,7 +2697,7 @@ export default function LandingPage() {
                   }}
                 />
                 <span className="text-2xl font-extrabold leading-none bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  codeWithcrush
+                  Code &amp; Crush
                 </span>
               </div>
               <p className="text-xs font-semibold text-primary mb-2 tracking-wide">
@@ -2648,12 +2894,12 @@ export default function LandingPage() {
                   },
                   {
                     label: "Terms of Service",
-                    action: () => {},
+                    action: () => setTosOpen(true),
                     ocid: "footer.terms.link",
                   },
                   {
                     label: "Ethics Policy",
-                    action: () => {},
+                    action: () => setEthicsOpen(true),
                     ocid: "footer.ethics.link",
                   },
                   {
@@ -2687,7 +2933,7 @@ export default function LandingPage() {
               {/* Contact info */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="w-3.5 h-3.5 shrink-0 text-primary/60" />
-                <span className="text-xs">codeWithcrush@gmail.com</span>
+                <span className="text-xs">codeandcrush@gmail.com</span>
               </div>
             </div>
           </div>
@@ -2713,7 +2959,7 @@ export default function LandingPage() {
           <div className="border-t border-border/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <p className="text-xs text-foreground/50 text-center sm:text-left">
-                &copy; {new Date().getFullYear()} codeWithcrush. All rights
+                &copy; {new Date().getFullYear()} Code &amp; Crush. All rights
                 reserved.
               </p>
               <span className="hidden sm:block text-foreground/20 text-xs">
@@ -2723,16 +2969,6 @@ export default function LandingPage() {
                 Built for learners, by learners.
               </p>
             </div>
-            <p className="text-xs text-foreground/50 text-center sm:text-right">
-              <a
-                href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "codewithcrush")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                Built with love using caffeine.ai
-              </a>
-            </p>
           </div>
         </div>
       </footer>

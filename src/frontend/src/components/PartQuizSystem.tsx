@@ -7,6 +7,144 @@ import CodeChecker from "./CodeChecker";
 import { appendQuizScore } from "./QuizScoreChart";
 import { incrementActivity } from "./StreakCalendar";
 
+// ── Voice recognition types ───────────────────────────────────────────────────
+type VoiceState = "idle" | "listening" | "processing" | "unsupported";
+
+// Local speech recognition type shim (webkit + standard)
+type SREvent = {
+  results: { [idx: number]: { [idx: number]: { transcript: string } } };
+};
+type SRInstance = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  onresult: ((e: SREvent) => void) | null;
+  start(): void;
+  stop(): void;
+};
+type SRCtor = new () => SRInstance;
+
+function getSR(): SRCtor | null {
+  const w = window as Window & {
+    SpeechRecognition?: SRCtor;
+    webkitSpeechRecognition?: SRCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+function matchTranscriptToOption(
+  transcript: string,
+  options: string[],
+): number {
+  const t = transcript.toLowerCase().trim();
+  const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+  if (t in letterMap) return letterMap[t];
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i].toLowerCase();
+    if (t.includes(opt) || opt.includes(t)) return i;
+    const tWords = t.split(/\s+/).filter((w) => w.length > 3);
+    const oWords = opt.split(/\s+/).filter((w) => w.length > 3);
+    const shared = tWords.filter((w) =>
+      oWords.some((ow) => ow.includes(w) || w.includes(ow)),
+    );
+    if (shared.length >= 1 && oWords.length > 0) return i;
+  }
+  return -1;
+}
+
+function useVoiceAnswer(onMatch: (optIdx: number, transcript: string) => void) {
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<SRInstance | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const optionsRef = useRef<string[]>([]);
+  const voiceStateRef = useRef<VoiceState>("idle");
+
+  const isSupported = typeof window !== "undefined" && !!getSR();
+
+  const stop = useCallback(() => {
+    recognitionRef.current?.stop();
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setVoiceState("idle");
+    voiceStateRef.current = "idle";
+  }, []);
+
+  const start = useCallback(
+    (options: string[]) => {
+      const SR = getSR();
+      if (!SR) {
+        setVoiceState("unsupported");
+        return;
+      }
+      if (voiceStateRef.current === "listening") {
+        stop();
+        return;
+      }
+      optionsRef.current = options;
+
+      const recognition = new SR();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognitionRef.current = recognition;
+
+      recognition.onstart = () => {
+        setVoiceState("listening");
+        voiceStateRef.current = "listening";
+        setTranscript("");
+      };
+
+      recognition.onresult = (e: SREvent) => {
+        const text = e.results[0][0].transcript;
+        setTranscript(text);
+        setVoiceState("processing");
+        voiceStateRef.current = "processing";
+        const matched = matchTranscriptToOption(text, optionsRef.current);
+        if (matched >= 0) {
+          onMatch(matched, text);
+        }
+        setTimeout(() => {
+          setVoiceState("idle");
+          voiceStateRef.current = "idle";
+        }, 2000);
+      };
+
+      recognition.onerror = () => {
+        setVoiceState("idle");
+        voiceStateRef.current = "idle";
+      };
+
+      recognition.onend = () => {
+        if (voiceStateRef.current === "listening") {
+          setVoiceState("idle");
+          voiceStateRef.current = "idle";
+        }
+      };
+
+      recognition.start();
+      timeoutRef.current = setTimeout(() => {
+        recognition.stop();
+        setVoiceState("idle");
+        voiceStateRef.current = "idle";
+      }, 6000);
+    },
+    [stop, onMatch],
+  );
+
+  useEffect(
+    () => () => {
+      recognitionRef.current?.stop();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    },
+    [],
+  );
+
+  return { voiceState, transcript, start, stop, isSupported };
+}
+
 // ── Activity tracking helpers ────────────────────────────────────────────────
 
 function trackQuizCompletion(moduleName: string, score: number, total: number) {
@@ -250,6 +388,9 @@ export default function PartQuizSystem({
   // ── Review mode ──
   const [showReview, setShowReview] = useState(false);
 
+  // ── Voice transcript state ──
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+
   // ── Initialize MCQ list (shuffled) ──
   const initQuiz = useCallback(() => {
     const shuffledMcqs = shuffle(rawData.mcqs.slice(0, 15)).map(
@@ -308,8 +449,20 @@ export default function PartQuizSystem({
       setCurrentMcqIndex((i) => i + 1);
       setSelectedOption(null);
       setShowExplanation(false);
+      setVoiceTranscript("");
     }
   };
+
+  // ── Voice answering (placed after handleSelectOption) ──
+  const {
+    voiceState,
+    transcript: voiceRecognized,
+    start: startVoice,
+    isSupported: voiceSupported,
+  } = useVoiceAnswer((optIdx, text) => {
+    setVoiceTranscript(text);
+    handleSelectOption(optIdx);
+  });
 
   // ── Programming logic ──
   const handleRunCode = async (pq: PartProgrammingQuestion) => {
@@ -662,9 +815,89 @@ export default function PartQuizSystem({
                 exit={{ x: -40, opacity: 0 }}
                 transition={{ duration: 0.22, ease: "easeOut" }}
               >
-                <p className="text-sm font-bold text-foreground leading-snug mb-4">
-                  {currentMcq.question}
-                </p>
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <p className="text-sm font-bold text-foreground leading-snug flex-1 min-w-0">
+                    {currentMcq.question}
+                  </p>
+                  {/* Voice button */}
+                  {voiceSupported ? (
+                    <button
+                      type="button"
+                      onClick={() => startVoice(currentMcq.options)}
+                      disabled={answered}
+                      title={
+                        voiceState === "listening"
+                          ? "Stop listening"
+                          : "Speak your answer"
+                      }
+                      className={`relative shrink-0 flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 select-none ${
+                        answered
+                          ? "opacity-40 cursor-not-allowed bg-muted border border-border text-muted-foreground"
+                          : voiceState === "listening"
+                            ? "bg-red-500/20 text-red-400 border border-red-500/40"
+                            : voiceState === "processing"
+                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
+                              : "bg-muted text-muted-foreground border border-border hover:border-primary/40 hover:text-foreground"
+                      }`}
+                      data-ocid="part-quiz.voice_button"
+                      aria-label="Voice answer"
+                    >
+                      {voiceState === "listening" && (
+                        <span className="absolute inset-0 rounded-xl border-2 border-red-400 animate-ping opacity-60 pointer-events-none" />
+                      )}
+                      <span
+                        className={
+                          voiceState === "listening" ? "animate-pulse" : ""
+                        }
+                      >
+                        🎤
+                      </span>
+                      <span className="hidden sm:inline">
+                        {voiceState === "listening"
+                          ? "Stop"
+                          : voiceState === "processing"
+                            ? "..."
+                            : "Voice"}
+                      </span>
+                    </button>
+                  ) : null}
+                </div>
+
+                {/* Voice transcript bubble */}
+                <AnimatePresence>
+                  {(voiceState === "listening" ||
+                    voiceState === "processing" ||
+                    voiceTranscript) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="mb-3 flex items-start gap-2 bg-primary/10 border border-primary/30 rounded-xl px-3 py-2"
+                    >
+                      <span className="text-sm shrink-0">
+                        {voiceState === "listening"
+                          ? "🎙️"
+                          : voiceState === "processing"
+                            ? "⏳"
+                            : "💬"}
+                      </span>
+                      <div>
+                        <div className="text-xs font-semibold text-primary mb-0.5">
+                          {voiceState === "listening"
+                            ? "Listening... speak your answer"
+                            : voiceState === "processing"
+                              ? "Matching your answer..."
+                              : "You said:"}
+                        </div>
+                        {(voiceTranscript || voiceRecognized) && (
+                          <div className="text-xs text-foreground italic">
+                            "{voiceTranscript || voiceRecognized}"
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="space-y-2" role="radiogroup">
                   {currentMcq.options.map((opt, i) => {

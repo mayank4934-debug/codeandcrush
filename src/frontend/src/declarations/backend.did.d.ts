@@ -24,6 +24,18 @@ export interface Article {
   'likes' : bigint,
   'dislikes' : bigint,
 }
+export interface ChallengeView {
+  'id' : string,
+  'status' : string,
+  'expiresAt' : Timestamp,
+  'createdAt' : Timestamp,
+  'challengeeScore' : [] | [bigint],
+  'quizTopic' : string,
+  'challengerScore' : bigint,
+  'quizId' : string,
+  'challengee' : string,
+  'challenger' : string,
+}
 export interface Conversation {
   'participants' : Array<Principal>,
   'lastMessage' : DirectMessage,
@@ -49,15 +61,16 @@ export interface Experience {
   'company' : string,
   'experienceText' : string,
 }
+export interface HttpHeader { 'value' : string, 'name' : string }
 export interface HttpRequest {
   'url' : string,
   'method' : string,
   'body' : Uint8Array,
-  'headers' : Array<[string, string]>,
+  'headers' : Array<HttpHeader>,
 }
 export interface HttpResponse {
   'body' : Uint8Array,
-  'headers' : Array<[string, string]>,
+  'headers' : Array<HttpHeader>,
   'status_code' : number,
 }
 export interface Message {
@@ -65,6 +78,9 @@ export interface Message {
   'text' : string,
   'timestamp' : bigint,
 }
+export type MessageStatus = { 'read' : null } |
+  { 'sent' : null } |
+  { 'delivered' : null };
 export interface MockTestResult {
   'id' : string,
   'completedAt' : Timestamp,
@@ -111,6 +127,12 @@ export interface Question {
   'difficulty' : bigint,
   'text' : string,
 }
+export interface Reaction {
+  'messageId' : string,
+  'userId' : Principal,
+  'emoji' : string,
+  'timestamp' : Timestamp,
+}
 export interface Review {
   'id' : string,
   'universityName' : string,
@@ -118,6 +140,17 @@ export interface Review {
   'text' : string,
   'timestamp' : Timestamp,
   'rating' : bigint,
+}
+export interface Story {
+  'id' : string,
+  'expiresAt' : Timestamp,
+  'viewerIds' : Array<Principal>,
+  'authorId' : Principal,
+  'createdAt' : Timestamp,
+  'mediaUrl' : string,
+  'viewCount' : bigint,
+  'caption' : [] | [string],
+  'mediaType' : string,
 }
 export type Timestamp = bigint;
 export interface UserProfile {
@@ -137,17 +170,25 @@ export type VerifyResult = { 'ok' : null } |
   { 'err' : string };
 export interface _SERVICE {
   'addMessage' : ActorMethod<[string, string], undefined>,
+  'addReaction' : ActorMethod<[string, string], undefined>,
   'addSampleQuestions' : ActorMethod<[], undefined>,
   'awardBadge' : ActorMethod<[string], undefined>,
   'awardGCoins' : ActorMethod<[bigint], bigint>,
+  'checkSeasonalMilestone' : ActorMethod<[string, bigint], [] | [string]>,
   'completeTopic' : ActorMethod<[string], undefined>,
+  'createStory' : ActorMethod<[string, string, [] | [string]], Story>,
   'deleteNote' : ActorMethod<[string], boolean>,
+  'deleteStory' : ActorMethod<[string], undefined>,
   'dislikeArticle' : ActorMethod<[string], boolean>,
   'enrollCourse' : ActorMethod<[string], EnrollResult>,
   'followUser' : ActorMethod<[string], boolean>,
+  'getActiveChallenges' : ActorMethod<[], Array<ChallengeView>>,
+  'getActiveStories' : ActorMethod<[], Array<Story>>,
   'getAllStats' : ActorMethod<[], UserProfile>,
   'getAllTestResults' : ActorMethod<[], Array<MockTestResult>>,
   'getArticles' : ActorMethod<[string], Array<Article>>,
+  'getChallengeById' : ActorMethod<[string], [] | [ChallengeView]>,
+  'getChallengeHistory' : ActorMethod<[], Array<ChallengeView>>,
   'getConversations' : ActorMethod<[], Array<Conversation>>,
   'getDomainTestResults' : ActorMethod<[string], Array<MockTestResult>>,
   'getEnrolledCourses' : ActorMethod<[], Array<CourseId>>,
@@ -155,6 +196,7 @@ export interface _SERVICE {
   'getGCoins' : ActorMethod<[], bigint>,
   'getHistory' : ActorMethod<[], Array<Message>>,
   'getLatestReviews' : ActorMethod<[bigint], Array<Review>>,
+  'getMessageStatus' : ActorMethod<[string], MessageStatus>,
   'getMessages' : ActorMethod<[Principal], Array<DirectMessage>>,
   'getMockTestResults' : ActorMethod<[], Array<MockTestResult>>,
   'getMyFollowers' : ActorMethod<[], Array<string>>,
@@ -163,33 +205,45 @@ export interface _SERVICE {
   'getOrCreateProfile' : ActorMethod<[string], UserProfile>,
   'getProgressReport' : ActorMethod<[], ProgressReport>,
   'getQuestionsByTopic' : ActorMethod<[string], Array<Question>>,
+  'getReactions' : ActorMethod<[string], Array<Reaction>>,
   'getReviews' : ActorMethod<[], Array<Review>>,
+  'getSavedMessages' : ActorMethod<[], Array<string>>,
   'getTestLeaderboard' : ActorMethod<
     [string, bigint],
     Array<[Principal, bigint]>
   >,
+  'getUnlockedSeasonalItems' : ActorMethod<[], Array<string>>,
   'getUnreadCount' : ActorMethod<[], bigint>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'incrementArticleView' : ActorMethod<[string], boolean>,
   'isFollowingUser' : ActorMethod<[string], boolean>,
   'likeArticle' : ActorMethod<[string], boolean>,
+  'markDelivered' : ActorMethod<[string], undefined>,
   'markMessagesRead' : ActorMethod<[Principal], undefined>,
   'proxyAIChat' : ActorMethod<[Array<AIChatMessage>, string], string>,
+  'recordModuleCompletion' : ActorMethod<[string, bigint], [] | [string]>,
+  'removeReaction' : ActorMethod<[string], undefined>,
   'saveDomainTestResult' : ActorMethod<
     [string, bigint, bigint, bigint, Array<bigint>],
     string
   >,
+  'saveMessage' : ActorMethod<[string], undefined>,
   'saveMockTestResult' : ActorMethod<
     [string, bigint, bigint, bigint, Array<string>],
     MockTestResult
   >,
   'saveNote' : ActorMethod<[string, string, string], Note>,
+  'sendChallenge' : ActorMethod<
+    [Principal, string, string, bigint],
+    ChallengeView
+  >,
   'sendDirectMessage' : ActorMethod<[Principal, string], string>,
   'sendVerificationEmail' : ActorMethod<[string], undefined>,
   'submitArticle' : ActorMethod<
     [string, string, Array<string>, string],
     Article
   >,
+  'submitChallengeScore' : ActorMethod<[string, bigint], boolean>,
   'submitExperience' : ActorMethod<
     [string, string, string, string, string],
     Experience
@@ -201,9 +255,11 @@ export interface _SERVICE {
   >,
   'unenrollCourse' : ActorMethod<[string], EnrollResult>,
   'unfollowUser' : ActorMethod<[string], boolean>,
+  'unsaveMessage' : ActorMethod<[string], undefined>,
   'updateCompanion' : ActorMethod<[string, Personality], undefined>,
   'updateNote' : ActorMethod<[string, string, string], [] | [Note]>,
   'verifyEmail' : ActorMethod<[string, string], VerifyResult>,
+  'viewStory' : ActorMethod<[string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

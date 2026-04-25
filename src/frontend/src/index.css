@@ -4,6 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Full-viewport base reset ===== */
+html {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 @layer base {
   :root {
     --radius: 0.875rem;
@@ -56,6 +74,8 @@
     @apply bg-background text-foreground;
     font-family: "Plus Jakarta Sans", sans-serif;
     overflow-x: hidden;
+    height: 100%;
+    width: 100%;
   }
 
   ::-webkit-scrollbar {
@@ -68,6 +88,14 @@
     background: oklch(var(--border));
     border-radius: 999px;
   }
+}
+
+/* ===== Root app container — full viewport ===== */
+#root {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== Gradients ===== */
@@ -89,6 +117,111 @@
 }
 
 /* ===== Animations ===== */
+
+/* Avatar idle breathing — gentle vertical sway simulating chest rise + micro-lean */
+@keyframes avatar-idle-breathe {
+  0%,
+  100% {
+    transform: translateY(0px) scaleY(1);
+  }
+  30% {
+    transform: translateY(-3px) scaleY(1.005);
+  }
+  60% {
+    transform: translateY(-1.5px) scaleY(1.002);
+  }
+}
+
+/* Avatar pose — sitting: squash the figure slightly and shift down */
+@keyframes avatar-sit-in {
+  from {
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    transform: translateY(12px) scaleY(0.88);
+  }
+}
+
+/* Avatar pose — thinking: tilt head left with subtle bob */
+@keyframes avatar-think-bob {
+  0%,
+  100% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-2deg) translateY(-4px);
+  }
+}
+
+/* Seasonal unlock sparkle spin */
+@keyframes sparkle-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.2);
+  }
+  50% {
+    transform: rotate(180deg) scale(1);
+  }
+  75% {
+    transform: rotate(270deg) scale(1.15);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Toast slide in from top */
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* Avatar idle class — applied to the pose frame wrapper */
+.avatar-idle {
+  animation: avatar-idle-breathe 4s ease-in-out infinite;
+}
+
+/* Standing pose — default breathing */
+.avatar-pose-standing {
+  animation: avatar-idle-breathe 4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* Sitting pose — squash effect */
+.avatar-pose-sitting {
+  animation: avatar-sit-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    avatar-idle-breathe 5s 0.4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* Thinking pose — lean + bob */
+.avatar-pose-thinking {
+  animation: avatar-think-bob 3s ease-in-out infinite;
+  transform-origin: center top;
+}
+
+/* Body-part highlight ring when hovering a tile */
+.avatar-part-highlight svg {
+  filter: drop-shadow(0 0 10px oklch(0.58 0.2 265 / 0.7)) brightness(1.1);
+}
+
+.sparkle-spin {
+  display: inline-block;
+  animation: sparkle-spin 2s linear infinite;
+}
+
+.seasonal-toast-enter {
+  animation: toast-slide-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 @keyframes float-gentle {
   0%,
   100% {
@@ -213,6 +346,43 @@
 }
 
 /* ===== Mobile-first responsive helpers ===== */
+
+/* Full viewport fill — use on top-level page wrappers */
+.page-fill {
+  min-height: calc(100dvh - 57px); /* subtract bottom nav */
+  width: 100%;
+}
+
+/* Content max-width with centered auto margins */
+.content-container {
+  width: 100%;
+  max-width: 1536px; /* 2xl */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Dashboard grid: 1 col mobile, 2 col tablet, 3-4 col desktop */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+@media (min-width: 1280px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 
 /* Documentation Hub sidebar: hidden on small screens, full-width drawer on mobile */
 .doc-sidebar-mobile-hidden {
@@ -434,6 +604,13 @@
 
 .shadow-subtle {
   box-shadow: 0 1px 4px oklch(0 0 0 / 0.12);
+}
+
+/* ===== Confetti animation for test results ===== */
+@keyframes confettiFall {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+  }
 }
 
 /* ===== Reduced Motion — honour user system preference ===== */

@@ -15,6 +15,7 @@ import {
   Download,
   Filter,
   Flame,
+  History,
   LayoutDashboard,
   MessageSquare,
   Palette,
@@ -25,6 +26,7 @@ import {
   ShoppingBag,
   Star,
   StickyNote,
+  Swords,
   Trash2,
   TrendingUp,
   Trophy,
@@ -36,6 +38,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AvatarBuilder from "../components/AvatarBuilder";
+import MessagingSystem from "../components/MessagingSystem";
 import NotesPanel from "../components/NotesPanel";
 import { JOB_LISTINGS, type JobListing } from "../data/jobListings";
 
@@ -81,6 +84,12 @@ import {
 } from "../data/clothing";
 import { COMPANION_PRESETS } from "../data/companions";
 import { ROADMAPS } from "../data/roadmaps";
+import {
+  type ChallengeView,
+  getSeasonalItemInfo,
+  useGetActiveChallenges,
+  useGetChallengeHistory,
+} from "../hooks/useQueries";
 
 const XP_PER_LEVEL = 100;
 
@@ -600,6 +609,8 @@ const AmbientPlayer = memo(function AmbientPlayer() {
   );
 });
 
+// ── Progress Report Types ────────────────────────────────────────────────────
+
 function relativeDate(isoDate: string): string {
   const now = Date.now();
   const then = new Date(isoDate).getTime();
@@ -609,8 +620,6 @@ function relativeDate(isoDate: string): string {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
-
-// ── Progress Report Types ────────────────────────────────────────────────────
 
 interface QuizHistoryEntry {
   courseId: string;
@@ -827,6 +836,459 @@ const ProgressChip = memo(function ProgressChip({ pct }: { pct: number }) {
   );
 });
 
+// ── Share token helpers ───────────────────────────────────────────────────────
+
+interface ShareReport {
+  username: string;
+  level: number;
+  xp: number;
+  streak: number;
+  badges: string[];
+  courses: {
+    name: string;
+    icon: string;
+    pct: number;
+    topicsDone: number;
+    topicsTotal: number;
+  }[];
+  solvedCount: number;
+  expiresAt: number;
+}
+
+function generateShareToken(): string {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from(
+    { length: 8 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
+}
+
+function saveShareReport(token: string, data: ShareReport) {
+  try {
+    const all = JSON.parse(
+      localStorage.getItem("cc_share_tokens") ?? "{}",
+    ) as Record<string, ShareReport>;
+    for (const k of Object.keys(all)) {
+      if (all[k].expiresAt < Date.now()) delete all[k];
+    }
+    all[token] = data;
+    localStorage.setItem("cc_share_tokens", JSON.stringify(all));
+  } catch {}
+}
+
+function loadShareReport(token: string): ShareReport | null {
+  try {
+    const all = JSON.parse(
+      localStorage.getItem("cc_share_tokens") ?? "{}",
+    ) as Record<string, ShareReport>;
+    const r = all[token];
+    if (!r || r.expiresAt < Date.now()) return null;
+    return r;
+  } catch {
+    return null;
+  }
+}
+
+function getShareTokenFromHash(): string | null {
+  try {
+    const h = window.location.hash;
+    if (!h.startsWith("#share=")) return null;
+    return h.slice(7).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function SharedReportModal({
+  token,
+  onClose,
+}: { token: string; onClose: () => void }) {
+  const report = useMemo(() => loadShareReport(token), [token]);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      data-ocid="dashboard.shared_report.dialog"
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 280, damping: 22 }}
+        className="bg-card border border-border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-border bg-muted/30 sticky top-0">
+          <Trophy className="w-4 h-4 text-primary" />
+          <h3 className="font-semibold text-foreground flex-1">
+            Shared Progress Report
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-muted"
+            aria-label="Close"
+            data-ocid="dashboard.shared_report.close_button"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="p-5">
+          {!report ? (
+            <div
+              className="text-center py-10 space-y-3"
+              data-ocid="dashboard.shared_report.expired"
+            >
+              <div className="text-5xl">⌛</div>
+              <p className="font-bold text-foreground">
+                This report link has expired
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Share links are valid for 7 days.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-sm text-primary font-semibold hover:underline"
+                data-ocid="dashboard.shared_report.dismiss_button"
+              >
+                Go back
+              </button>
+            </div>
+          ) : (
+            <div
+              className="space-y-4"
+              data-ocid="dashboard.shared_report.content"
+            >
+              <div className="flex items-center gap-3 rounded-xl bg-muted/40 border border-border px-4 py-3">
+                <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary/30 shrink-0">
+                  <span className="text-lg font-extrabold text-primary">
+                    {(report.username || "S").slice(0, 1).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground truncate">
+                    {report.username || "Student"}
+                  </p>
+                  <p className="text-xs text-primary font-medium">
+                    Level {report.level} Scholar
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                  <span className="text-sm font-extrabold text-yellow-500">
+                    ⚡ {report.xp} XP
+                  </span>
+                  <span className="text-xs text-orange-500 font-semibold">
+                    🔥 {report.streak}-day streak
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {
+                    label: "Courses",
+                    value: report.courses.length,
+                    color: "text-primary",
+                  },
+                  {
+                    label: "Solved",
+                    value: report.solvedCount,
+                    color: "text-green-500",
+                  },
+                  {
+                    label: "Badges",
+                    value: report.badges.length,
+                    color: "text-amber-500",
+                  },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-xl bg-muted/40 border border-border p-3 text-center"
+                  >
+                    <p className={`text-xl font-extrabold ${s.color}`}>
+                      {s.value}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {s.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {report.courses.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+                    Enrolled Courses
+                  </p>
+                  {report.courses.map((c) => (
+                    <div
+                      key={c.name}
+                      className="rounded-xl bg-muted/30 border border-border px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold text-foreground">
+                          {c.icon} {c.name}
+                        </span>
+                        <span
+                          className={`text-xs font-bold ${c.pct === 100 ? "text-green-500" : "text-primary"}`}
+                        >
+                          {c.pct}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${c.pct === 100 ? "bg-green-500" : "bg-primary"}`}
+                          style={{ width: `${c.pct}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {c.topicsDone}/{c.topicsTotal} topics
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {report.badges.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+                    Badges Earned
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {report.badges.map((b) => (
+                      <span
+                        key={b}
+                        className="text-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 rounded-full px-2.5 py-1 font-semibold"
+                      >
+                        🏅 {b}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground text-center pt-1">
+                Shared via Code & Crush · Expires{" "}
+                {new Date(report.expiresAt).toLocaleDateString()}
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function buildPdfCanvas(
+  username: string,
+  level: number,
+  xp: number,
+  streak: number,
+  badges: string[],
+  courseStats: CourseStats[],
+  completedQuizzes: { label: string; score: number; date: string }[],
+  solvedProblems: { label: string; difficulty: string; date: string }[],
+  nextModules: { course: string; icon: string; next: string }[],
+): HTMLCanvasElement {
+  const W = 794;
+  const showQ = completedQuizzes.slice(0, 5);
+  const showP = solvedProblems.slice(0, 5);
+  const H = Math.max(
+    400,
+    300 +
+      courseStats.length * 72 +
+      showQ.length * 30 +
+      showP.length * 30 +
+      nextModules.length * 30 +
+      80,
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  ctx.fillStyle = "#0f0a1e";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(140,100,255,0.05)";
+  for (let xi = 0; xi < W; xi += 20)
+    for (let yi = 0; yi < H; yi += 20) {
+      ctx.beginPath();
+      ctx.arc(xi, yi, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  const hg = ctx.createLinearGradient(0, 0, W, 90);
+  hg.addColorStop(0, "rgba(120,60,255,0.55)");
+  hg.addColorStop(1, "rgba(60,30,160,0.3)");
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, 0, W, 90);
+  ctx.font = "bold 28px sans-serif";
+  ctx.fillStyle = "#c4b5fd";
+  ctx.fillText("Code & Crush", 32, 46);
+  ctx.font = "16px sans-serif";
+  ctx.fillStyle = "rgba(220,200,255,0.75)";
+  ctx.fillText("Progress Report", 32, 70);
+  ctx.font = "11px sans-serif";
+  ctx.fillStyle = "rgba(200,200,255,0.4)";
+  ctx.textAlign = "right";
+  ctx.fillText(`Generated: ${new Date().toLocaleString()}`, W - 28, 55);
+  ctx.textAlign = "left";
+  let ry = 114;
+  ctx.font = "bold 22px sans-serif";
+  ctx.fillStyle = "#f0ecff";
+  ctx.fillText(username || "Student", 32, ry);
+  ctx.font = "14px sans-serif";
+  ctx.fillStyle = "#a78bfa";
+  ctx.fillText(`Level ${level} Scholar`, 32, ry + 22);
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillStyle = "#fbbf24";
+  ctx.textAlign = "right";
+  ctx.fillText(`XP: ${xp}`, W - 28, ry);
+  ctx.fillStyle = "#fb923c";
+  ctx.fillText(`Streak: ${streak} days`, W - 28, ry + 22);
+  ctx.textAlign = "left";
+  ry += 50;
+  const pills = [
+    { l: "Courses", v: String(courseStats.length), c: "#818cf8" },
+    { l: "Quizzes", v: String(completedQuizzes.length), c: "#4ade80" },
+    { l: "Problems", v: String(solvedProblems.length), c: "#22d3ee" },
+    { l: "Badges", v: String(badges.length), c: "#fbbf24" },
+  ];
+  let rpx = 32;
+  for (const p of pills) {
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.beginPath();
+    ctx.roundRect(rpx, ry, 140, 44, 8);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.1)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(rpx, ry, 140, 44, 8);
+    ctx.stroke();
+    ctx.font = "bold 18px sans-serif";
+    ctx.fillStyle = p.c;
+    ctx.fillText(p.v, rpx + 16, ry + 26);
+    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "rgba(220,210,255,0.65)";
+    ctx.fillText(p.l, rpx + 16, ry + 40);
+    rpx += 155;
+  }
+  ry += 64;
+  const divd = () => {
+    ctx.strokeStyle = "rgba(160,100,255,0.2)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(28, ry);
+    ctx.lineTo(W - 28, ry);
+    ctx.stroke();
+    ry += 18;
+  };
+  const sect = (t: string, c: string) => {
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillStyle = c;
+    ctx.fillText(t, 28, ry);
+    ry += 22;
+  };
+  const rrow = (lbl: string, right: string, rc = "rgba(220,210,255,0.75)") => {
+    const t = lbl.length > 72 ? `${lbl.slice(0, 69)}…` : lbl;
+    ctx.font = "12px sans-serif";
+    ctx.fillStyle = "rgba(230,220,255,0.85)";
+    ctx.fillText(t, 36, ry);
+    ctx.fillStyle = rc;
+    ctx.textAlign = "right";
+    ctx.fillText(right, W - 28, ry);
+    ctx.textAlign = "left";
+    ry += 28;
+  };
+  divd();
+  if (courseStats.length > 0) {
+    sect("ENROLLED COURSES", "#a78bfa");
+    for (const c of courseStats) {
+      rrow(
+        `${c.icon} ${c.name}`,
+        c.pct === 100
+          ? "Complete"
+          : `${c.pct}% · ${c.topicsDone}/${c.topicsTotal}`,
+        c.pct === 100 ? "#4ade80" : "#c4b5fd",
+      );
+      const bx = 36;
+      const byw = ry - 20;
+      const bw = W - 200;
+      const bh = 5;
+      ctx.fillStyle = "rgba(120,60,255,0.18)";
+      ctx.beginPath();
+      ctx.roundRect(bx, byw, bw, bh, 2);
+      ctx.fill();
+      ctx.fillStyle = c.pct === 100 ? "#4ade80" : "#8b5cf6";
+      ctx.beginPath();
+      ctx.roundRect(bx, byw, (bw * c.pct) / 100, bh, 2);
+      ctx.fill();
+      ry += 8;
+    }
+    ry += 2;
+  }
+  if (showQ.length > 0) {
+    sect("COMPLETED QUIZZES", "#86efac");
+    for (const q of showQ)
+      rrow(
+        q.label,
+        `${q.score}% · ${q.date}`,
+        q.score >= 75 ? "#4ade80" : q.score >= 40 ? "#fbbf24" : "#f87171",
+      );
+    if (completedQuizzes.length > 5) {
+      ctx.font = "11px sans-serif";
+      ctx.fillStyle = "rgba(180,170,255,0.5)";
+      ctx.fillText(`  +${completedQuizzes.length - 5} more`, 36, ry);
+      ry += 24;
+    }
+  }
+  if (showP.length > 0) {
+    sect("PROBLEMS SOLVED", "#67e8f9");
+    for (const p of showP)
+      rrow(
+        p.label,
+        `${p.difficulty} · ${p.date}`,
+        p.difficulty === "Easy"
+          ? "#4ade80"
+          : p.difficulty === "Medium"
+            ? "#fbbf24"
+            : "#f87171",
+      );
+    if (solvedProblems.length > 5) {
+      ctx.font = "11px sans-serif";
+      ctx.fillStyle = "rgba(180,170,255,0.5)";
+      ctx.fillText(`  +${solvedProblems.length - 5} more`, 36, ry);
+      ry += 24;
+    }
+  }
+  if (nextModules.length > 0) {
+    sect("UPCOMING GOALS", "#fde68a");
+    for (const m of nextModules)
+      rrow(`${m.icon} ${m.course}`, `Next: ${m.next}`, "#fbbf24");
+  }
+  divd();
+  ctx.font = "11px sans-serif";
+  ctx.fillStyle = "rgba(200,200,255,0.3)";
+  ctx.textAlign = "center";
+  ctx.fillText("Code & Crush · Progress Report", W / 2, H - 8);
+  ctx.textAlign = "left";
+  return canvas;
+}
+
+function downloadAsPdf(canvas: HTMLCanvasElement, filename: string): void {
+  const dataUrl = canvas.toDataURL("image/png");
+  const win = window.open("", "_blank");
+  if (!win) {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename.replace(".pdf", ".png");
+    a.click();
+    return;
+  }
+  win.document.write(
+    `<!DOCTYPE html><html><head><title>${filename}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0f0a1e;display:flex;justify-content:center}img{max-width:100%;display:block}@page{size:A4 portrait;margin:0}@media print{body{background:#0f0a1e}img{width:100%;page-break-inside:avoid}}</style></head><body><img src="${dataUrl}" alt="Progress Report"/><script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`,
+  );
+  win.document.close();
+}
+
 // ── Canvas-based shareable card ───────────────────────────────────────────────
 
 function drawShareCard(
@@ -996,7 +1458,7 @@ function drawShareCard(
   ctx.font = "11px sans-serif";
   ctx.fillStyle = "rgba(200,200,255,0.35)";
   ctx.textAlign = "center";
-  ctx.fillText("caffeine.ai · Code & Crush", W / 2, H - 12);
+  ctx.fillText("Code & Crush", W / 2, H - 12);
   ctx.textAlign = "left";
 }
 
@@ -1110,7 +1572,8 @@ const UPCOMING_DOMAINS = [
   "Cybersecurity",
 ];
 
-// ── Print-ready PDF report modal ─────────────────────────────────────────────
+// ── Print-ready PDF report modal (kept for print fallback) ───────────────────
+// biome-ignore lint/correctness/noUnusedVariables: kept for future use
 function PrintReportModal({
   user,
   level,
@@ -1163,7 +1626,7 @@ function PrintReportModal({
         {/* Title */}
         <div className="text-center border-b-2 border-primary pb-6">
           <h1 className="text-3xl font-extrabold text-primary mb-1">
-            codeWithcrush
+            Code &amp; Crush
           </h1>
           <p className="text-lg font-semibold text-foreground">
             Progress Report
@@ -1342,7 +1805,7 @@ function PrintReportModal({
 
         {/* Footer */}
         <div className="text-center pt-4 border-t border-border text-xs text-muted-foreground">
-          <p>codeWithcrush · caffeine.ai · {new Date().getFullYear()}</p>
+          <p>Code &amp; Crush · {new Date().getFullYear()}</p>
         </div>
       </div>
     </div>
@@ -1357,14 +1820,13 @@ const ProgressReportSection = memo(function ProgressReportSection({
   totalEstMins,
   expandedCourse,
   handleExpandCourse,
-  handleOpenShareModal,
   notes,
 }: ProgressReportProps) {
   const [showAllCompleted, setShowAllCompleted] = useState(false);
   const [showAllProblems, setShowAllProblems] = useState(false);
-  const [reportDownloaded, setReportDownloaded] = useState(false);
-  const [showPrintReport, setShowPrintReport] = useState(false);
-  const [shareTextCopied, setShareTextCopied] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [shareCardImg, setShareCardImg] = useState<string | null>(null);
 
   // Completed quizzes from real quiz history + sample fallback
   const completedQuizzes = useMemo(() => {
@@ -1501,102 +1963,74 @@ const ProgressReportSection = memo(function ProgressReportSection({
     );
   }, [enrolledCourses]);
 
-  const handleDownloadReport = useCallback(() => {
-    const lines: string[] = [
-      "=== YOUR PROGRESS REPORT — codeWithcrush ===",
-      `Generated: ${new Date().toLocaleString()}`,
-      "",
-      `Student: ${user.username || "Student"}`,
-      `Level: ${level} | XP: ${user.xp} | Streak: ${user.streak} days`,
-      "",
-      "── COMPLETED ──────────────────────────────",
-      ...courseStats
-        .filter((c) => c.pct === 100)
-        .map((c) => `✅ ${c.icon} ${c.name} — Completed`),
-      ...completedQuizzes.map((q) => `📝 ${q.label} — ${q.score}% — ${q.date}`),
-      ...solvedProblems
-        .slice(0, 5)
-        .map((p) => `💡 ${p.label} (${p.difficulty}) — Solved ${p.date}`),
-      ...completedModuleTests.map((t) => `📋 ${t.label} — ${t.date}`),
-      "",
-      "── IN PROGRESS ─────────────────────────────",
-      ...courseStats
-        .filter((c) => c.pct > 0 && c.pct < 100)
-        .map(
-          (c) =>
-            `🔵 ${c.icon} ${c.name} — ${c.pct}% complete · Module ${c.modulesDone + 1} next`,
-        ),
-      `📒 Notes this week: ${notesThisWeek.length}`,
-      weekStudyMins > 0
-        ? `⏱ Est. study time this week: ~${weekStudyMins} min`
-        : "",
-      "",
-      "── UPCOMING GOALS ──────────────────────────",
-      ...nextModules.map((m) => `⭐ ${m.icon} ${m.course} → ${m.next}`),
-      ...recommendedProblems.map(
-        (p) => `💡 Try: ${p.label} (${p.difficulty}) — ${p.topic}`,
-      ),
-      `🎯 Consider enrolling in: ${suggestedDomain}`,
-      "",
-      "─────────────────────────────────────────────",
-      "caffeine.ai · codeWithcrush",
-    ].filter(Boolean);
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "codeWithcrush-progress-report.txt";
-    a.click();
-    setReportDownloaded(true);
-    setTimeout(() => setReportDownloaded(false), 2500);
-  }, [
-    user,
-    level,
-    courseStats,
-    completedQuizzes,
-    solvedProblems,
-    completedModuleTests,
-    notesThisWeek,
-    weekStudyMins,
-    nextModules,
-    recommendedProblems,
-    suggestedDomain,
-  ]);
+  // ── New: Download PDF handler ─────────────────────────────────────────────
+  const handleDownloadPdf = useCallback(() => {
+    setPdfGenerating(true);
+    try {
+      const date = new Date().toISOString().slice(0, 10);
+      const canvas = buildPdfCanvas(
+        user.username || "Student",
+        level,
+        user.xp,
+        user.streak,
+        user.badges,
+        courseStats,
+        completedQuizzes,
+        solvedProblems,
+        nextModules,
+      );
+      downloadAsPdf(canvas, `CodeAndCrush-Progress-Report-${date}.pdf`);
+    } finally {
+      setTimeout(() => setPdfGenerating(false), 1500);
+    }
+  }, [user, level, courseStats, completedQuizzes, solvedProblems, nextModules]);
 
-  // Enhanced share — exact format: quizzes, problems, current course, next goal, streak
-  const handleEnhancedShare = useCallback(() => {
-    const activeCourse = courseStats.find((c) => c.pct > 0 && c.pct < 100);
-    const nextGoal =
-      nextModules.length > 0
-        ? `${nextModules[0].course} — ${nextModules[0].next}`
-        : `Enroll in ${suggestedDomain}`;
-    const text = [
-      "My codeWithcrush Progress Report:",
-      `✅ Completed: ${completedQuizzes.length} quizzes, ${solvedProblems.length} problems`,
-      activeCourse
-        ? `🔄 Currently in: ${activeCourse.name} — ${activeCourse.pct}% done`
-        : `🔄 Currently in: ${enrolledCourses.length} course${enrolledCourses.length !== 1 ? "s" : ""} enrolled`,
-      `🎯 Next goal: ${nextGoal}`,
-      `🔥 Streak: ${user.streak} days`,
-    ].join("\n");
+  // ── New: Share link handler ───────────────────────────────────────────────
+  const handleShareLink = useCallback(() => {
+    const token = generateShareToken();
+    const data: ShareReport = {
+      username: user.username || "Student",
+      level,
+      xp: user.xp,
+      streak: user.streak,
+      badges: user.badges,
+      courses: courseStats.map((c) => ({
+        name: c.name,
+        icon: c.icon,
+        pct: c.pct,
+        topicsDone: c.topicsDone,
+        topicsTotal: c.topicsTotal,
+      })),
+      solvedCount: user.solvedProblems.length,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    };
+    saveShareReport(token, data);
+
+    // Build share card image
+    const tmpCanvas = document.createElement("canvas");
+    drawShareCard(
+      tmpCanvas,
+      user.username || "Student",
+      level,
+      user.xp,
+      user.streak,
+      user.badges.map((b) => ({ name: b, earnDate: null })),
+      courseStats,
+    );
+    setShareCardImg(tmpCanvas.toDataURL("image/png"));
+
+    const shareUrl = `${window.location.href.split("#")[0]}#share=${token}`;
     navigator.clipboard
-      .writeText(text)
+      .writeText(shareUrl)
       .then(() => {
-        setShareTextCopied(true);
-        setTimeout(() => setShareTextCopied(false), 2500);
+        setShareLinkCopied(true);
+        setTimeout(() => setShareLinkCopied(false), 4000);
       })
       .catch(() => {
-        setShareTextCopied(true);
-        setTimeout(() => setShareTextCopied(false), 2500);
+        setShareLinkCopied(true);
+        setTimeout(() => setShareLinkCopied(false), 4000);
       });
-  }, [
-    courseStats,
-    nextModules,
-    suggestedDomain,
-    completedQuizzes.length,
-    solvedProblems.length,
-    enrolledCourses.length,
-    user.streak,
-  ]);
+  }, [user, level, courseStats]);
 
   const difficultyColor = (d: string) =>
     d === "Easy"
@@ -1636,46 +2070,80 @@ const ProgressReportSection = memo(function ProgressReportSection({
         <div className="ml-auto flex gap-2 flex-wrap justify-end">
           <button
             type="button"
-            onClick={() => setShowPrintReport(true)}
+            onClick={handleDownloadPdf}
+            disabled={pdfGenerating}
             data-ocid="dashboard.progress_report.pdf_button"
-            className="flex items-center gap-1.5 text-xs bg-muted border border-border text-foreground rounded-lg px-3 py-1.5 font-semibold hover:bg-accent transition-colors"
+            className="flex items-center gap-1.5 text-xs bg-muted border border-border text-foreground rounded-lg px-3 py-1.5 font-semibold hover:bg-accent transition-colors disabled:opacity-60"
           >
-            <Download className="w-3.5 h-3.5" /> PDF
-          </button>
-          <button
-            type="button"
-            onClick={handleDownloadReport}
-            data-ocid="dashboard.progress_report.download_button"
-            className="flex items-center gap-1.5 text-xs bg-muted border border-border text-foreground rounded-lg px-3 py-1.5 font-semibold hover:bg-accent transition-colors"
-          >
-            {reportDownloaded ? (
+            {pdfGenerating ? (
               <>
-                <CheckCircle className="w-3.5 h-3.5 text-green-500" /> Saved!
+                <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />{" "}
+                Generating…
               </>
             ) : (
               <>
-                <Download className="w-3.5 h-3.5" /> .txt
+                <Download className="w-3.5 h-3.5" /> Download PDF
               </>
             )}
           </button>
           <button
             type="button"
-            onClick={handleEnhancedShare}
-            data-ocid="dashboard.progress_report.share_button"
+            onClick={handleShareLink}
+            data-ocid="dashboard.progress_report.share_link_button"
             className="flex items-center gap-1.5 text-xs bg-primary text-primary-foreground rounded-lg px-3 py-1.5 font-semibold hover:bg-primary/90 transition-colors"
           >
-            {shareTextCopied ? (
+            {shareLinkCopied ? (
               <>
-                <CheckCircle className="w-3.5 h-3.5" /> Copied!
+                <CheckCircle className="w-3.5 h-3.5" /> Link copied!
               </>
             ) : (
               <>
-                <Share2 className="w-3.5 h-3.5" /> 📤 Share
+                <Share2 className="w-3.5 h-3.5" /> Share Report
               </>
             )}
           </button>
         </div>
       </div>
+
+      {/* Share link toast */}
+      <AnimatePresence>
+        {shareLinkCopied && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="mx-5 mt-3 rounded-xl bg-green-500/15 border border-green-500/25 px-4 py-2.5 flex items-start gap-3"
+            data-ocid="dashboard.share_link.success_state"
+          >
+            <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                Link copied! Valid for 7 days
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Anyone with this link can view your progress snapshot. No
+                sensitive data included.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Social share image card */}
+      {shareCardImg && shareLinkCopied && (
+        <div className="mx-5 mt-2 rounded-xl overflow-hidden border border-border bg-muted/30">
+          <p className="text-[10px] text-muted-foreground text-center py-1.5 px-3">
+            Long-press or right-click to save this card for social sharing
+          </p>
+          <img
+            src={shareCardImg}
+            alt="Progress Report Card"
+            className="w-full"
+            data-ocid="dashboard.share_card.image"
+          />
+        </div>
+      )}
 
       <div className="p-5 space-y-5">
         {/* Identity banner */}
@@ -2143,11 +2611,11 @@ const ProgressReportSection = memo(function ProgressReportSection({
         <div className="flex gap-2 pt-1">
           <button
             type="button"
-            onClick={handleEnhancedShare}
+            onClick={handleShareLink}
             data-ocid="dashboard.share_progress.text_button"
             className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {shareTextCopied ? (
+            {shareLinkCopied ? (
               <>
                 <CheckCircle className="w-4 h-4" /> Copied!
               </>
@@ -2159,40 +2627,210 @@ const ProgressReportSection = memo(function ProgressReportSection({
           </button>
           <button
             type="button"
-            onClick={handleOpenShareModal}
+            onClick={handleDownloadPdf}
             data-ocid="dashboard.share_progress.card_button"
             className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-colors bg-muted border border-border text-foreground hover:bg-accent"
           >
-            <Download className="w-4 h-4" /> Report Card
+            <Download className="w-4 h-4" /> Download PDF
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+// ── Challenge Card ────────────────────────────────────────────────────────────
+function ChallengeCard({ challenge }: { challenge: ChallengeView }) {
+  const now = Date.now();
+  const msLeft = Math.max(0, challenge.expiresAt - now);
+  const hLeft = Math.floor(msLeft / 3_600_000);
+  const mLeft = Math.floor((msLeft % 3_600_000) / 60_000);
+  const isCompleted = challenge.status === "completed";
+  const iChallenger = challenge.challengerId === "current_user";
+  const myScore = iChallenger
+    ? challenge.challengerScore
+    : (challenge.challengeeScore ?? null);
+  const theirScore = iChallenger
+    ? (challenge.challengeeScore ?? null)
+    : challenge.challengerScore;
+  const theirName = iChallenger
+    ? challenge.challengeeName
+    : challenge.challengerName;
+  const iWon =
+    isCompleted &&
+    myScore !== null &&
+    theirScore !== null &&
+    myScore > theirScore;
+
+  return (
+    <div
+      className={`rounded-2xl border p-4 transition-all ${
+        isCompleted
+          ? "bg-muted/30 border-border"
+          : "bg-card border-primary/20 shadow-sm"
+      }`}
+      data-ocid="dashboard.challenge.card"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-xs font-bold text-foreground">
+              vs {theirName}
+            </span>
+            {isCompleted && iWon && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-500 border border-yellow-500/25">
+                🏆 You won!
+              </span>
+            )}
+            {isCompleted && !iWon && myScore !== null && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                Better luck next time
+              </span>
+            )}
+            {!isCompleted && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
+                ⏳ Pending
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground truncate">
+            📚 {challenge.quizTopic}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          {isCompleted ? (
+            <div className="flex items-center gap-2">
+              <div className="text-center">
+                <p className="text-lg font-extrabold text-primary">
+                  {myScore ?? "—"}
+                </p>
+                <p className="text-[9px] text-muted-foreground">You</p>
+              </div>
+              <span className="text-muted-foreground text-sm font-bold">
+                vs
+              </span>
+              <div className="text-center">
+                <p className="text-lg font-extrabold text-foreground">
+                  {theirScore ?? "—"}
+                </p>
+                <p className="text-[9px] text-muted-foreground">
+                  {theirName.split(" ")[0]}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-right">
+              <p className="text-base font-extrabold text-primary">{myScore}</p>
+              <p className="text-[9px] text-muted-foreground">Your score</p>
+              {!isCompleted && (
+                <p className="text-[9px] text-orange-400 font-semibold mt-0.5">
+                  {hLeft}h {mLeft}m left
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Challenges Section ────────────────────────────────────────────────────────
+function ChallengesSection() {
+  const [tab, setTab] = useState<"active" | "history">("active");
+  const { setPage } = useApp();
+  const { data: activeChallenges = [], isLoading: loadingActive } =
+    useGetActiveChallenges();
+  const { data: historyItems = [], isLoading: loadingHistory } =
+    useGetChallengeHistory();
+
+  const items = tab === "active" ? activeChallenges : historyItems;
+  const isLoading = tab === "active" ? loadingActive : loadingHistory;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.02 }}
+      className="bg-card rounded-2xl p-5 border border-border"
+      data-ocid="dashboard.challenges.card"
+      style={{ contain: "layout style" }}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <Swords className="w-4 h-4 text-primary" />
+        <h3 className="font-semibold text-foreground">Challenges</h3>
+        {activeChallenges.length > 0 && (
+          <span className="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+            {activeChallenges.length}
+          </span>
+        )}
+        {/* Tab toggle */}
+        <div className="ml-auto flex rounded-xl bg-muted border border-border overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setTab("active")}
+            data-ocid="dashboard.challenges.active.tab"
+            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${tab === "active" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("history")}
+            data-ocid="dashboard.challenges.history.tab"
+            className={`px-3 py-1.5 text-xs font-semibold flex items-center gap-1 transition-colors ${tab === "history" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <History className="w-3 h-3" /> History
           </button>
         </div>
       </div>
 
-      {/* ── Print Report Modal ── */}
-      <AnimatePresence>
-        {showPrintReport && (
-          <motion.div
-            key="print-report"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60]"
-          >
-            <PrintReportModal
-              user={user}
-              level={level}
-              courseStats={courseStats}
-              completedQuizzes={completedQuizzes}
-              solvedProblems={solvedProblems}
-              nextModules={nextModules}
-              onClose={() => setShowPrintReport(false)}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-20 rounded-2xl bg-muted/20 animate-pulse"
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <div
+          className="text-center py-8"
+          data-ocid="dashboard.challenges.empty_state"
+        >
+          <Swords className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground font-medium">
+            {tab === "active"
+              ? "No active challenges"
+              : "No challenge history yet"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {tab === "active"
+              ? "Finish a quiz and challenge a friend to beat your score!"
+              : "Completed challenges will appear here."}
+          </p>
+          {tab === "active" && (
+            <button
+              type="button"
+              data-ocid="dashboard.challenges.take_quiz.button"
+              onClick={() => setPage("problems")}
+              className="mt-4 px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Take a Quiz
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((c) => (
+            <ChallengeCard key={c.id} challenge={c} />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
-});
+}
 
 export default function DashboardPage({
   embedded = false,
@@ -2210,6 +2848,9 @@ export default function DashboardPage({
   );
   const [shareCopied, setShareCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [shareViewToken, setShareViewToken] = useState<string | null>(() =>
+    getShareTokenFromHash(),
+  );
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const [quizFilter, setQuizFilter] = useState("all");
   const [progressTick, setProgressTick] = useState(0);
@@ -2245,6 +2886,10 @@ export default function DashboardPage({
 
   // ── Jobs modal state ──
   const [showJobsModal, setShowJobsModal] = useState(false);
+  // ── DM from Leaderboard ──
+  const [dmTargetUserId, setDmTargetUserId] = useState<string | null>(null);
+  const [dmTargetUserName, setDmTargetUserName] = useState<string | null>(null);
+  const [showDmFromLeaderboard, setShowDmFromLeaderboard] = useState(false);
   const [jobFilter, setJobFilter] = useState<
     "all" | "full-time" | "internship" | "remote"
   >("all");
@@ -2633,7 +3278,7 @@ export default function DashboardPage({
 
   return (
     <div
-      className={`${embedded ? "flex-1 overflow-y-auto" : "min-h-screen overflow-y-auto"} bg-background`}
+      className={`${embedded ? "flex-1 overflow-y-auto min-h-0 w-full" : "min-h-screen w-full overflow-y-auto"} bg-background`}
       style={{ overflowAnchor: "none", scrollbarGutter: "stable" }}
     >
       {/* Header */}
@@ -2652,7 +3297,7 @@ export default function DashboardPage({
       )}
 
       {/* pb-nav-safe ensures last element clears the sticky bottom nav bar + safe area */}
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 pb-nav-safe">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 xl:px-6 py-4 sm:py-6 space-y-5 pb-nav-safe w-full">
         {/* ── PROBLEM OF THE DAY ── */}
         <PotdCard onNavigateProblems={() => setPage("problems")} />
 
@@ -2932,11 +3577,29 @@ export default function DashboardPage({
                     </button>
                   </div>
                   <p className="text-[11px] text-muted-foreground text-center">
-                    Generated at {new Date().toLocaleString()} · caffeine.ai
+                    Generated at {new Date().toLocaleString()} · Code &amp;
+                    Crush
                   </p>
                 </div>
               </motion.div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── SHARED REPORT VIEW (from #share=TOKEN hash) ── */}
+        <AnimatePresence>
+          {shareViewToken && (
+            <SharedReportModal
+              token={shareViewToken}
+              onClose={() => {
+                setShareViewToken(null);
+                window.history.replaceState(
+                  null,
+                  "",
+                  window.location.pathname + window.location.search,
+                );
+              }}
+            />
           )}
         </AnimatePresence>
 
@@ -3005,8 +3668,18 @@ export default function DashboardPage({
               xp={user.xp}
               level={level}
               streak={user.streak}
+              onMessageUser={(targetUserId, targetUsername) => {
+                setDmTargetUserId(targetUserId);
+                setDmTargetUserName(targetUsername);
+                setShowDmFromLeaderboard(true);
+              }}
             />
           </motion.div>
+        </LazySection>
+
+        {/* ── CHALLENGES SECTION ── */}
+        <LazySection>
+          <ChallengesSection />
         </LazySection>
 
         {/* ── Social Feed Card ── */}
@@ -4466,6 +5139,21 @@ export default function DashboardPage({
           ))}
         </nav>
       )}
+
+      {/* DM modal opened from Leaderboard message button */}
+      <AnimatePresence>
+        {showDmFromLeaderboard && dmTargetUserId && dmTargetUserName && (
+          <MessagingSystem
+            onClose={() => {
+              setShowDmFromLeaderboard(false);
+              setDmTargetUserId(null);
+              setDmTargetUserName(null);
+            }}
+            initialUserId={dmTargetUserId}
+            initialUserName={dmTargetUserName}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

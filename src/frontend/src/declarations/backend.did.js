@@ -8,7 +8,31 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const Timestamp = IDL.Int;
+export const Story = IDL.Record({
+  'id' : IDL.Text,
+  'expiresAt' : Timestamp,
+  'viewerIds' : IDL.Vec(IDL.Principal),
+  'authorId' : IDL.Principal,
+  'createdAt' : Timestamp,
+  'mediaUrl' : IDL.Text,
+  'viewCount' : IDL.Nat,
+  'caption' : IDL.Opt(IDL.Text),
+  'mediaType' : IDL.Text,
+});
 export const EnrollResult = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
+export const ChallengeView = IDL.Record({
+  'id' : IDL.Text,
+  'status' : IDL.Text,
+  'expiresAt' : Timestamp,
+  'createdAt' : Timestamp,
+  'challengeeScore' : IDL.Opt(IDL.Nat),
+  'quizTopic' : IDL.Text,
+  'challengerScore' : IDL.Nat,
+  'quizId' : IDL.Text,
+  'challengee' : IDL.Text,
+  'challenger' : IDL.Text,
+});
 export const Personality = IDL.Variant({
   'calm' : IDL.Null,
   'playful' : IDL.Null,
@@ -28,7 +52,6 @@ export const UserProfile = IDL.Record({
   'completedTopics' : IDL.Vec(IDL.Text),
   'companionName' : IDL.Text,
 });
-export const Timestamp = IDL.Int;
 export const MockTestResult = IDL.Record({
   'id' : IDL.Text,
   'completedAt' : Timestamp,
@@ -93,6 +116,11 @@ export const Review = IDL.Record({
   'timestamp' : Timestamp,
   'rating' : IDL.Nat,
 });
+export const MessageStatus = IDL.Variant({
+  'read' : IDL.Null,
+  'sent' : IDL.Null,
+  'delivered' : IDL.Null,
+});
 export const Note = IDL.Record({
   'id' : IDL.Text,
   'title' : IDL.Text,
@@ -120,15 +148,22 @@ export const Question = IDL.Record({
   'difficulty' : IDL.Nat,
   'text' : IDL.Text,
 });
+export const Reaction = IDL.Record({
+  'messageId' : IDL.Text,
+  'userId' : IDL.Principal,
+  'emoji' : IDL.Text,
+  'timestamp' : Timestamp,
+});
+export const HttpHeader = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
 export const HttpRequest = IDL.Record({
   'url' : IDL.Text,
   'method' : IDL.Text,
   'body' : IDL.Vec(IDL.Nat8),
-  'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+  'headers' : IDL.Vec(HttpHeader),
 });
 export const HttpResponse = IDL.Record({
   'body' : IDL.Vec(IDL.Nat8),
-  'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+  'headers' : IDL.Vec(HttpHeader),
   'status_code' : IDL.Nat16,
 });
 export const AIChatMessage = IDL.Record({
@@ -139,17 +174,37 @@ export const VerifyResult = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
 
 export const idlService = IDL.Service({
   'addMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'addReaction' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'addSampleQuestions' : IDL.Func([], [], []),
   'awardBadge' : IDL.Func([IDL.Text], [], []),
   'awardGCoins' : IDL.Func([IDL.Nat], [IDL.Nat], []),
+  'checkSeasonalMilestone' : IDL.Func(
+      [IDL.Text, IDL.Nat],
+      [IDL.Opt(IDL.Text)],
+      ['query'],
+    ),
   'completeTopic' : IDL.Func([IDL.Text], [], []),
+  'createStory' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Opt(IDL.Text)],
+      [Story],
+      [],
+    ),
   'deleteNote' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'deleteStory' : IDL.Func([IDL.Text], [], []),
   'dislikeArticle' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'enrollCourse' : IDL.Func([IDL.Text], [EnrollResult], []),
   'followUser' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'getActiveChallenges' : IDL.Func([], [IDL.Vec(ChallengeView)], ['query']),
+  'getActiveStories' : IDL.Func([], [IDL.Vec(Story)], ['query']),
   'getAllStats' : IDL.Func([], [UserProfile], ['query']),
   'getAllTestResults' : IDL.Func([], [IDL.Vec(MockTestResult)], ['query']),
   'getArticles' : IDL.Func([IDL.Text], [IDL.Vec(Article)], ['query']),
+  'getChallengeById' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(ChallengeView)],
+      ['query'],
+    ),
+  'getChallengeHistory' : IDL.Func([], [IDL.Vec(ChallengeView)], ['query']),
   'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
   'getDomainTestResults' : IDL.Func(
       [IDL.Text],
@@ -161,6 +216,7 @@ export const idlService = IDL.Service({
   'getGCoins' : IDL.Func([], [IDL.Nat], ['query']),
   'getHistory' : IDL.Func([], [IDL.Vec(Message)], ['query']),
   'getLatestReviews' : IDL.Func([IDL.Nat], [IDL.Vec(Review)], ['query']),
+  'getMessageStatus' : IDL.Func([IDL.Text], [MessageStatus], ['query']),
   'getMessages' : IDL.Func(
       [IDL.Principal],
       [IDL.Vec(DirectMessage)],
@@ -173,30 +229,46 @@ export const idlService = IDL.Service({
   'getOrCreateProfile' : IDL.Func([IDL.Text], [UserProfile], []),
   'getProgressReport' : IDL.Func([], [ProgressReport], ['query']),
   'getQuestionsByTopic' : IDL.Func([IDL.Text], [IDL.Vec(Question)], ['query']),
+  'getReactions' : IDL.Func([IDL.Text], [IDL.Vec(Reaction)], ['query']),
   'getReviews' : IDL.Func([], [IDL.Vec(Review)], ['query']),
+  'getSavedMessages' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getTestLeaderboard' : IDL.Func(
       [IDL.Text, IDL.Nat],
       [IDL.Vec(IDL.Tuple(IDL.Principal, IDL.Nat))],
       ['query'],
     ),
+  'getUnlockedSeasonalItems' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getUnreadCount' : IDL.Func([], [IDL.Nat], ['query']),
   'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
   'incrementArticleView' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'isFollowingUser' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
   'likeArticle' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'markDelivered' : IDL.Func([IDL.Text], [], []),
   'markMessagesRead' : IDL.Func([IDL.Principal], [], []),
   'proxyAIChat' : IDL.Func([IDL.Vec(AIChatMessage), IDL.Text], [IDL.Text], []),
+  'recordModuleCompletion' : IDL.Func(
+      [IDL.Text, IDL.Nat],
+      [IDL.Opt(IDL.Text)],
+      [],
+    ),
+  'removeReaction' : IDL.Func([IDL.Text], [], []),
   'saveDomainTestResult' : IDL.Func(
       [IDL.Text, IDL.Nat, IDL.Nat, IDL.Nat, IDL.Vec(IDL.Nat)],
       [IDL.Text],
       [],
     ),
+  'saveMessage' : IDL.Func([IDL.Text], [], []),
   'saveMockTestResult' : IDL.Func(
       [IDL.Text, IDL.Nat, IDL.Nat, IDL.Nat, IDL.Vec(IDL.Text)],
       [MockTestResult],
       [],
     ),
   'saveNote' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [Note], []),
+  'sendChallenge' : IDL.Func(
+      [IDL.Principal, IDL.Text, IDL.Text, IDL.Nat],
+      [ChallengeView],
+      [],
+    ),
   'sendDirectMessage' : IDL.Func([IDL.Principal, IDL.Text], [IDL.Text], []),
   'sendVerificationEmail' : IDL.Func([IDL.Text], [], []),
   'submitArticle' : IDL.Func(
@@ -204,6 +276,7 @@ export const idlService = IDL.Service({
       [Article],
       [],
     ),
+  'submitChallengeScore' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Bool], []),
   'submitExperience' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [Experience],
@@ -216,15 +289,41 @@ export const idlService = IDL.Service({
     ),
   'unenrollCourse' : IDL.Func([IDL.Text], [EnrollResult], []),
   'unfollowUser' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'unsaveMessage' : IDL.Func([IDL.Text], [], []),
   'updateCompanion' : IDL.Func([IDL.Text, Personality], [], []),
   'updateNote' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [IDL.Opt(Note)], []),
   'verifyEmail' : IDL.Func([IDL.Text, IDL.Text], [VerifyResult], []),
+  'viewStory' : IDL.Func([IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const Timestamp = IDL.Int;
+  const Story = IDL.Record({
+    'id' : IDL.Text,
+    'expiresAt' : Timestamp,
+    'viewerIds' : IDL.Vec(IDL.Principal),
+    'authorId' : IDL.Principal,
+    'createdAt' : Timestamp,
+    'mediaUrl' : IDL.Text,
+    'viewCount' : IDL.Nat,
+    'caption' : IDL.Opt(IDL.Text),
+    'mediaType' : IDL.Text,
+  });
   const EnrollResult = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
+  const ChallengeView = IDL.Record({
+    'id' : IDL.Text,
+    'status' : IDL.Text,
+    'expiresAt' : Timestamp,
+    'createdAt' : Timestamp,
+    'challengeeScore' : IDL.Opt(IDL.Nat),
+    'quizTopic' : IDL.Text,
+    'challengerScore' : IDL.Nat,
+    'quizId' : IDL.Text,
+    'challengee' : IDL.Text,
+    'challenger' : IDL.Text,
+  });
   const Personality = IDL.Variant({
     'calm' : IDL.Null,
     'playful' : IDL.Null,
@@ -244,7 +343,6 @@ export const idlFactory = ({ IDL }) => {
     'completedTopics' : IDL.Vec(IDL.Text),
     'companionName' : IDL.Text,
   });
-  const Timestamp = IDL.Int;
   const MockTestResult = IDL.Record({
     'id' : IDL.Text,
     'completedAt' : Timestamp,
@@ -309,6 +407,11 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : Timestamp,
     'rating' : IDL.Nat,
   });
+  const MessageStatus = IDL.Variant({
+    'read' : IDL.Null,
+    'sent' : IDL.Null,
+    'delivered' : IDL.Null,
+  });
   const Note = IDL.Record({
     'id' : IDL.Text,
     'title' : IDL.Text,
@@ -336,15 +439,22 @@ export const idlFactory = ({ IDL }) => {
     'difficulty' : IDL.Nat,
     'text' : IDL.Text,
   });
+  const Reaction = IDL.Record({
+    'messageId' : IDL.Text,
+    'userId' : IDL.Principal,
+    'emoji' : IDL.Text,
+    'timestamp' : Timestamp,
+  });
+  const HttpHeader = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
   const HttpRequest = IDL.Record({
     'url' : IDL.Text,
     'method' : IDL.Text,
     'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'headers' : IDL.Vec(HttpHeader),
   });
   const HttpResponse = IDL.Record({
     'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'headers' : IDL.Vec(HttpHeader),
     'status_code' : IDL.Nat16,
   });
   const AIChatMessage = IDL.Record({ 'content' : IDL.Text, 'role' : IDL.Text });
@@ -352,17 +462,37 @@ export const idlFactory = ({ IDL }) => {
   
   return IDL.Service({
     'addMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'addReaction' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'addSampleQuestions' : IDL.Func([], [], []),
     'awardBadge' : IDL.Func([IDL.Text], [], []),
     'awardGCoins' : IDL.Func([IDL.Nat], [IDL.Nat], []),
+    'checkSeasonalMilestone' : IDL.Func(
+        [IDL.Text, IDL.Nat],
+        [IDL.Opt(IDL.Text)],
+        ['query'],
+      ),
     'completeTopic' : IDL.Func([IDL.Text], [], []),
+    'createStory' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Opt(IDL.Text)],
+        [Story],
+        [],
+      ),
     'deleteNote' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'deleteStory' : IDL.Func([IDL.Text], [], []),
     'dislikeArticle' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'enrollCourse' : IDL.Func([IDL.Text], [EnrollResult], []),
     'followUser' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'getActiveChallenges' : IDL.Func([], [IDL.Vec(ChallengeView)], ['query']),
+    'getActiveStories' : IDL.Func([], [IDL.Vec(Story)], ['query']),
     'getAllStats' : IDL.Func([], [UserProfile], ['query']),
     'getAllTestResults' : IDL.Func([], [IDL.Vec(MockTestResult)], ['query']),
     'getArticles' : IDL.Func([IDL.Text], [IDL.Vec(Article)], ['query']),
+    'getChallengeById' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(ChallengeView)],
+        ['query'],
+      ),
+    'getChallengeHistory' : IDL.Func([], [IDL.Vec(ChallengeView)], ['query']),
     'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
     'getDomainTestResults' : IDL.Func(
         [IDL.Text],
@@ -374,6 +504,7 @@ export const idlFactory = ({ IDL }) => {
     'getGCoins' : IDL.Func([], [IDL.Nat], ['query']),
     'getHistory' : IDL.Func([], [IDL.Vec(Message)], ['query']),
     'getLatestReviews' : IDL.Func([IDL.Nat], [IDL.Vec(Review)], ['query']),
+    'getMessageStatus' : IDL.Func([IDL.Text], [MessageStatus], ['query']),
     'getMessages' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(DirectMessage)],
@@ -390,34 +521,50 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Question)],
         ['query'],
       ),
+    'getReactions' : IDL.Func([IDL.Text], [IDL.Vec(Reaction)], ['query']),
     'getReviews' : IDL.Func([], [IDL.Vec(Review)], ['query']),
+    'getSavedMessages' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getTestLeaderboard' : IDL.Func(
         [IDL.Text, IDL.Nat],
         [IDL.Vec(IDL.Tuple(IDL.Principal, IDL.Nat))],
         ['query'],
       ),
+    'getUnlockedSeasonalItems' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getUnreadCount' : IDL.Func([], [IDL.Nat], ['query']),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'incrementArticleView' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'isFollowingUser' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'likeArticle' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'markDelivered' : IDL.Func([IDL.Text], [], []),
     'markMessagesRead' : IDL.Func([IDL.Principal], [], []),
     'proxyAIChat' : IDL.Func(
         [IDL.Vec(AIChatMessage), IDL.Text],
         [IDL.Text],
         [],
       ),
+    'recordModuleCompletion' : IDL.Func(
+        [IDL.Text, IDL.Nat],
+        [IDL.Opt(IDL.Text)],
+        [],
+      ),
+    'removeReaction' : IDL.Func([IDL.Text], [], []),
     'saveDomainTestResult' : IDL.Func(
         [IDL.Text, IDL.Nat, IDL.Nat, IDL.Nat, IDL.Vec(IDL.Nat)],
         [IDL.Text],
         [],
       ),
+    'saveMessage' : IDL.Func([IDL.Text], [], []),
     'saveMockTestResult' : IDL.Func(
         [IDL.Text, IDL.Nat, IDL.Nat, IDL.Nat, IDL.Vec(IDL.Text)],
         [MockTestResult],
         [],
       ),
     'saveNote' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [Note], []),
+    'sendChallenge' : IDL.Func(
+        [IDL.Principal, IDL.Text, IDL.Text, IDL.Nat],
+        [ChallengeView],
+        [],
+      ),
     'sendDirectMessage' : IDL.Func([IDL.Principal, IDL.Text], [IDL.Text], []),
     'sendVerificationEmail' : IDL.Func([IDL.Text], [], []),
     'submitArticle' : IDL.Func(
@@ -425,6 +572,7 @@ export const idlFactory = ({ IDL }) => {
         [Article],
         [],
       ),
+    'submitChallengeScore' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Bool], []),
     'submitExperience' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [Experience],
@@ -437,6 +585,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'unenrollCourse' : IDL.Func([IDL.Text], [EnrollResult], []),
     'unfollowUser' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'unsaveMessage' : IDL.Func([IDL.Text], [], []),
     'updateCompanion' : IDL.Func([IDL.Text, Personality], [], []),
     'updateNote' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text],
@@ -444,6 +593,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'verifyEmail' : IDL.Func([IDL.Text, IDL.Text], [VerifyResult], []),
+    'viewStory' : IDL.Func([IDL.Text], [], []),
   });
 };
 

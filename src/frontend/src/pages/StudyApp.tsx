@@ -774,7 +774,7 @@ export default function StudyApp() {
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Top bar */}
-      <header className="bg-card border-b border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0">
+      <header className="bg-card border-b border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <img
             src="/assets/generated/code-crush-logo-refined-transparent.dim_400x400.png"
@@ -849,6 +849,7 @@ export default function StudyApp() {
         </div>
       </header>
 
+      {/* Body: sidebar + main — fills all space between header and bottom nav */}
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Left Sidebar — hidden on mobile */}
         <aside className="w-56 lg:w-64 bg-card border-r border-border flex-col p-3 lg:p-4 gap-4 shrink-0 hidden md:flex overflow-y-auto">
@@ -943,7 +944,7 @@ export default function StudyApp() {
           </div>
         </aside>
 
-        {/* Center: Main Panel */}
+        {/* Center: Main Panel — fills all remaining width, scrollable per tab */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {activeTab === "modules" && (
             <Suspense fallback={<LoadingSpinner />}>
@@ -971,7 +972,7 @@ export default function StudyApp() {
           {/* Chat Tab */}
           {activeTab === "chat" && (
             <div
-              className="flex-1 flex flex-col min-h-0 relative"
+              className="flex-1 flex flex-col min-h-0 overflow-hidden relative"
               data-page="chat"
             >
               {/* Mute/unmute motivational audio button */}
@@ -997,7 +998,7 @@ export default function StudyApp() {
                   <Volume2 className="w-4 h-4" />
                 )}
               </button>
-              <ScrollArea className="flex-1 px-3 sm:px-4 py-3 sm:py-5">
+              <ScrollArea className="flex-1 px-3 sm:px-4 py-3 sm:py-5 min-h-0">
                 <div className="space-y-3 sm:space-y-5 max-w-[700px] mx-auto pb-4">
                   {messages.length === 0 && (
                     <div
@@ -1087,8 +1088,8 @@ export default function StudyApp() {
                 )}
               </AnimatePresence>
 
-              {/* Chat Input */}
-              <div className="bg-background border-t border-border p-3 sm:p-4 pb-2 shrink-0">
+              {/* Chat Input — sits just above the bottom nav */}
+              <div className="bg-background border-t border-border px-3 sm:px-4 pt-3 pb-3 shrink-0">
                 <div className="max-w-[700px] mx-auto">
                   <div className="flex items-end gap-2 bg-card border border-border rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 focus-within:border-primary/50 transition-colors">
                     <textarea
@@ -1127,9 +1128,9 @@ export default function StudyApp() {
         </main>
       </div>
 
-      {/* Bottom Navigation Bar — LinkedIn Style, sticky */}
+      {/* Bottom Navigation Bar — LinkedIn Style, sticky, always last */}
       <nav
-        className="bg-card border-t border-border shrink-0"
+        className="bg-card border-t border-border shrink-0 z-20"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Main navigation"
       >
