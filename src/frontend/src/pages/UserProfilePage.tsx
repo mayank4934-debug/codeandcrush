@@ -4,24 +4,21 @@ import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   BookOpen,
-  Calendar,
   Code,
-  Copy,
-  Edit,
-  Flame,
+  FileText,
+  Grid3X3,
+  Lock,
   MessageSquare,
+  Pencil,
   Share2,
-  Star,
   Trophy,
-  UserCheck,
   UserMinus,
   UserPlus,
-  Users,
   X,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import WhatsAppAvatar, {
   DEFAULT_AVATAR_CONFIG,
@@ -29,53 +26,67 @@ import WhatsAppAvatar, {
 import { useApp } from "../context/AppContext";
 import { CODING_PROBLEMS } from "../data/problems";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const BADGE_META: Record<
   string,
-  { icon: string; label: string; color: string }
+  { icon: string; label: string; desc: string; color: string }
 > = {
   "first-problem": {
     icon: "🚀",
     label: "First Steps",
-    color:
-      "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
+    desc: "Solved your first problem",
+    color: "from-blue-500/20 to-blue-600/20 border-blue-500/30 text-blue-400",
   },
   "streak-7": {
     icon: "🔥",
     label: "Week Warrior",
+    desc: "7-day study streak",
     color:
-      "text-orange-600 bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800",
+      "from-orange-500/20 to-orange-600/20 border-orange-500/30 text-orange-400",
   },
   "code-master": {
     icon: "💻",
     label: "Code Master",
+    desc: "Solved 25+ problems",
     color:
-      "text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800",
+      "from-purple-500/20 to-purple-600/20 border-purple-500/30 text-purple-400",
   },
   "love-call": {
     icon: "💖",
     label: "Love Call",
-    color:
-      "text-pink-600 bg-pink-50 border-pink-200 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800",
+    desc: "First companion interaction",
+    color: "from-pink-500/20 to-pink-600/20 border-pink-500/30 text-pink-400",
   },
   "hot-streak": {
     icon: "⚡",
     label: "Hot Streak",
+    desc: "15-day streak achieved",
     color:
-      "text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
+      "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400",
   },
   century: {
     icon: "💯",
     label: "Century",
+    desc: "Solved 100 problems",
     color:
-      "text-green-600 bg-green-50 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
+      "from-green-500/20 to-green-600/20 border-green-500/30 text-green-400",
   },
   enrolled: {
     icon: "📚",
     label: "Scholar",
-    color:
-      "text-teal-600 bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800",
+    desc: "Enrolled in a course",
+    color: "from-teal-500/20 to-teal-600/20 border-teal-500/30 text-teal-400",
+  },
+  speedster: {
+    icon: "🏎️",
+    label: "Speedster",
+    desc: "Solved 3 problems in a day",
+    color: "from-red-500/20 to-red-600/20 border-red-500/30 text-red-400",
   },
 };
+
+const ALL_BADGES = Object.keys(BADGE_META);
 
 const DOMAIN_META: Record<string, { icon: string; label: string }> = {
   frontend: { icon: "🌐", label: "Frontend Dev" },
@@ -96,206 +107,495 @@ const DOMAIN_META: Record<string, { icon: string; label: string }> = {
   "full-stack": { icon: "🏗️", label: "Full Stack" },
 };
 
-const DIFF_COLORS: Record<string, string> = {
-  Easy: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
-  Medium:
-    "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
-  Hard: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
+const DIFF_COLORS = {
+  Easy: "bg-green-500/15 text-green-400 border-green-500/30",
+  Medium: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  Hard: "bg-red-500/15 text-red-400 border-red-500/30",
 };
 
-const SIMULATED_LEADERBOARD_XP = [
+const POST_GRADIENTS = [
+  "from-blue-600 to-purple-600",
+  "from-pink-500 to-rose-600",
+  "from-emerald-500 to-teal-600",
+  "from-orange-500 to-amber-600",
+  "from-violet-600 to-indigo-600",
+  "from-cyan-500 to-blue-600",
+  "from-green-500 to-emerald-600",
+  "from-red-500 to-pink-600",
+];
+
+const SIMULATED_XP_POOL = [
   4800, 4200, 3900, 3600, 3400, 3100, 2900, 2700, 2500, 2300, 2100, 1900, 1750,
   1600, 1450, 1300, 1200, 1100, 1000, 950, 900, 850, 780, 720, 680, 620, 580,
-  520, 480, 440, 400, 370, 340, 310, 280, 250, 230, 210, 190, 170, 160, 150,
-  130, 120, 110, 100, 90, 80, 70, 60,
+  520, 480, 440, 400, 370, 340, 310, 280, 250, 230, 210, 190, 170,
 ];
 
 function calcPercentile(xp: number): number {
-  const total = SIMULATED_LEADERBOARD_XP.length + 1;
-  const above = SIMULATED_LEADERBOARD_XP.filter((v) => v > xp).length;
+  const total = SIMULATED_XP_POOL.length + 1;
+  const above = SIMULATED_XP_POOL.filter((v) => v > xp).length;
   return Math.max(1, Math.min(99, Math.round(((total - above) / total) * 100)));
 }
 
-function getFollowersCount(username: string): number {
-  const hash = username.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return (hash % 480) + 20;
-}
-
-function getFollowingCount(username: string): number {
-  const hash = username.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return (hash % 250) + 10;
+function deterministicCount(seed: string, max: number, min = 10): number {
+  const hash = seed.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return (hash % (max - min)) + min;
 }
 
 function getCourseProgress(courseId: string): number {
   try {
     const val = localStorage.getItem(`cc_course_progress_${courseId}`);
     if (val !== null) return Math.min(100, Math.max(0, Number(val)));
-    const hash = courseId
-      .split("")
-      .reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    return (hash % 85) + 5;
+    return deterministicCount(courseId, 90, 10);
   } catch {
     return 0;
   }
 }
 
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return "Jan 2025";
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return "Jan 2025";
-  }
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type ProfileTab = "posts" | "solved" | "badges" | "notes";
+
+interface HighlightItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
 }
 
-// ─── Difficulty Ring SVG ──────────────────────────────────────────────────────
+interface PostItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  gradient: string;
+  diffColor?: string;
+  icon?: string;
+}
 
-function DifficultyRing({
-  label,
-  solved,
-  total,
-  color,
-  trackColor,
+// ─── Story Highlight Viewer ───────────────────────────────────────────────────
+
+function HighlightViewer({
+  category,
+  items,
+  onClose,
 }: {
-  label: string;
-  solved: number;
-  total: number;
-  color: string;
-  trackColor: string;
+  category: { icon: string; title: string };
+  items: HighlightItem[];
+  onClose: () => void;
 }) {
-  const radius = 26;
-  const circumference = 2 * Math.PI * radius;
-  const pct = total > 0 ? Math.min(solved / total, 1) : 0;
-  const dashOffset = circumference * (1 - pct);
+  const [idx, setIdx] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const DURATION = 4000;
+
+  const advance = useCallback(() => {
+    setIdx((i) => {
+      if (i >= items.length - 1) {
+        onClose();
+        return i;
+      }
+      return i + 1;
+    });
+  }, [items.length, onClose]);
+
+  // Auto-advance via useEffect
+  useMemo(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(advance, DURATION);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advance]);
+
+  const current = items[idx];
+
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative w-16 h-16">
-        <svg
-          className="w-full h-full -rotate-90"
-          viewBox="0 0 64 64"
-          role="img"
-          aria-label={`${label} difficulty ring: ${solved} of ${total}`}
-        >
-          <title>{`${label}: ${solved}/${total} solved`}</title>
-          <circle
-            cx="32"
-            cy="32"
-            r={radius}
-            fill="none"
-            stroke={trackColor}
-            strokeWidth="6"
-          />
-          <circle
-            cx="32"
-            cy="32"
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth="6"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 0.8s ease" }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-base font-extrabold text-foreground leading-none">
-            {solved}
-          </span>
-          <span className="text-[9px] text-muted-foreground leading-none mt-0.5">
-            /{total}
-          </span>
-        </div>
+    <motion.div
+      className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      data-ocid="profile.highlight_viewer.dialog"
+      onClick={onClose}
+    >
+      {/* Progress bars */}
+      <div className="absolute top-0 left-0 right-0 flex gap-1 px-3 pt-3 z-10">
+        {items.map((_, i) => (
+          <div
+            key={`seg-${i}`}
+            className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden"
+          >
+            {i < idx && <div className="h-full bg-white w-full" />}
+            {i === idx && (
+              <motion.div
+                className="h-full bg-white"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: DURATION / 1000, ease: "linear" }}
+              />
+            )}
+          </div>
+        ))}
       </div>
-      <span className="text-xs font-semibold text-muted-foreground">
-        {label}
-      </span>
-    </div>
+
+      {/* Header */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay click-stop */}
+      <div
+        className="absolute top-6 left-4 right-4 flex items-center gap-3 z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xl">
+          {category.icon}
+        </div>
+        <span className="text-white font-bold text-sm">{category.title}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-auto text-white/80 hover:text-white"
+          data-ocid="profile.highlight_viewer.close_button"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Content card */}
+      {current ? (
+        <motion.div
+          key={current.id}
+          initial={{ scale: 0.92, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm mx-4 bg-card border border-border rounded-2xl p-6 text-center shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-5xl mb-4">{current.icon}</div>
+          <h3 className="font-extrabold text-foreground text-lg mb-1">
+            {current.title}
+          </h3>
+          <p className="text-muted-foreground text-sm">{current.subtitle}</p>
+        </motion.div>
+      ) : (
+        <div className="text-muted-foreground text-sm">Nothing here yet</div>
+      )}
+
+      {/* Tap zones */}
+      <button
+        type="button"
+        className="absolute left-0 top-0 bottom-0 w-1/3 z-20"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIdx((i) => Math.max(0, i - 1));
+        }}
+        aria-label="Previous story"
+      />
+      <button
+        type="button"
+        className="absolute right-0 top-0 bottom-0 w-1/3 z-20"
+        onClick={(e) => {
+          e.stopPropagation();
+          advance();
+        }}
+        aria-label="Next story"
+      />
+
+      {/* Counter */}
+      <div className="absolute bottom-8 text-white/50 text-xs">
+        {idx + 1} / {items.length}
+      </div>
+    </motion.div>
   );
 }
 
-// ─── User List Modal ──────────────────────────────────────────────────────────
+// ─── Edit Profile Modal ───────────────────────────────────────────────────────
 
-function UserListModal({
-  title,
-  users,
+function EditProfileModal({
+  user,
+  onSave,
   onClose,
-  onViewProfile,
 }: {
-  title: string;
-  users: string[];
+  user: { username: string; email: string };
+  onSave: (data: {
+    username: string;
+    bio: string;
+    displayName: string;
+  }) => void;
   onClose: () => void;
-  onViewProfile: (u: string) => void;
 }) {
+  const [displayName, setDisplayName] = useState(user.username);
+  const [username, setUsername] = useState(user.username);
+  const [bio, setBio] = useState(
+    () =>
+      localStorage.getItem("cc_profile_bio") ??
+      "CS enthusiast 💻 | Learning every day 🚀",
+  );
+
+  const handleSave = () => {
+    if (!username.trim()) {
+      toast.error("Username cannot be empty");
+      return;
+    }
+    onSave({
+      username: username.trim(),
+      bio: bio.trim(),
+      displayName: displayName.trim(),
+    });
+    localStorage.setItem("cc_profile_bio", bio.trim());
+    toast.success("Profile updated! ✨");
+    onClose();
+  };
+
   return (
-    <div
+    <motion.div
       className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-      data-ocid="profile.user_list.dialog"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      data-ocid="profile.edit_modal.dialog"
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        className="bg-card border border-border rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col shadow-xl"
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-          <h3 className="font-bold text-foreground">{title}</h3>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-bold text-foreground text-base">Edit Profile</h2>
           <button
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
-            data-ocid="profile.user_list.close_button"
+            data-ocid="profile.edit_modal.close_button"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          {users.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              <Users
-                className="w-8 h-8 mx-auto mb-2 opacity-40"
-                aria-hidden="true"
+        <div className="p-5 space-y-4">
+          <div>
+            <label
+              htmlFor="edit-display-name"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block"
+            >
+              Display Name
+            </label>
+            <input
+              id="edit-display-name"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder="Your display name"
+              data-ocid="profile.edit_modal.display_name_input"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="edit-username"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block"
+            >
+              Username
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                @
+              </span>
+              <input
+                id="edit-username"
+                type="text"
+                value={username}
+                onChange={(e) =>
+                  setUsername(e.target.value.replace(/\s/g, "").toLowerCase())
+                }
+                className="w-full bg-muted border border-border rounded-xl pl-7 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                placeholder="username"
+                data-ocid="profile.edit_modal.username_input"
               />
-              <p>No users yet</p>
             </div>
-          ) : (
-            users.map((u, i) => (
-              <button
-                type="button"
-                key={u}
-                onClick={() => {
-                  onViewProfile(u);
-                  onClose();
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors text-left"
-                data-ocid={`profile.user_list.item.${i + 1}`}
-              >
-                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
-                  {u[0]?.toUpperCase() ?? "U"}
-                </div>
-                <span className="text-sm font-semibold text-foreground truncate">
-                  {u}
-                </span>
-              </button>
-            ))
-          )}
+          </div>
+          <div>
+            <label
+              htmlFor="edit-bio"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block"
+            >
+              Bio
+            </label>
+            <textarea
+              id="edit-bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={3}
+              maxLength={150}
+              className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder="Tell others about yourself..."
+              data-ocid="profile.edit_modal.bio_textarea"
+            />
+            <div className="text-right text-xs text-muted-foreground mt-1">
+              {bio.length}/150
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 px-5 pb-5">
+          <Button
+            variant="outline"
+            className="flex-1 rounded-xl"
+            onClick={onClose}
+            data-ocid="profile.edit_modal.cancel_button"
+          >
+            Cancel
+          </Button>
+          <Button
+            className="flex-1 rounded-xl"
+            onClick={handleSave}
+            data-ocid="profile.edit_modal.save_button"
+          >
+            Save Changes
+          </Button>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
 
-// ─── Tab type ─────────────────────────────────────────────────────────────────
+// ─── Note Detail Modal ────────────────────────────────────────────────────────
 
-type ProfileTab = "problems" | "badges" | "courses" | "posts";
+function NoteModal({
+  note,
+  onClose,
+}: {
+  note: { title: string; content: string; topic: string; date: string };
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      data-ocid="profile.note_modal.dialog"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-card border border-border rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+          <div>
+            <h3 className="font-bold text-foreground">{note.title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {note.topic} · {note.date}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            data-ocid="profile.note_modal.close_button"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5">
+          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+            {note.content}
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
-// ─── Difficulty totals ────────────────────────────────────────────────────────
+// ─── Post Grid Item ───────────────────────────────────────────────────────────
+
+function PostGridItem({
+  post,
+  index,
+  onClick,
+}: {
+  post: PostItem;
+  index: number;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      className="relative aspect-square rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-primary"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      data-ocid={`profile.post_grid.item.${index + 1}`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br ${post.gradient}`} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+        {post.icon && <div className="text-2xl mb-1">{post.icon}</div>}
+        <div className="text-white text-[10px] font-bold text-center leading-tight line-clamp-2">
+          {post.title}
+        </div>
+        {post.diffColor && (
+          <div
+            className={`mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${post.diffColor}`}
+          >
+            {post.subtitle}
+          </div>
+        )}
+      </div>
+      {/* Hover overlay */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1 p-2"
+          >
+            <div className="text-white text-xs font-bold text-center leading-tight line-clamp-3">
+              {post.title}
+            </div>
+            <div className="text-white/60 text-[10px]">{post.subtitle}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </button>
+  );
+}
+
+// ─── Avatar Ring ──────────────────────────────────────────────────────────────
+
+function AvatarRing({
+  config,
+  size = 88,
+  active = false,
+  onClick,
+}: {
+  config: Parameters<typeof WhatsAppAvatar>[0]["config"];
+  size?: number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const ringStyle = active
+    ? "bg-gradient-to-br from-pink-500 via-purple-500 to-orange-400"
+    : "bg-muted";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full p-[3px] ${ringStyle} shrink-0 focus:outline-none focus:ring-2 focus:ring-primary`}
+      style={{ width: size + 6, height: size + 6 }}
+      aria-label="View profile avatar"
+    >
+      <div className="rounded-full bg-background p-[2px] w-full h-full flex items-center justify-center">
+        <WhatsAppAvatar config={config} size={size} />
+      </div>
+    </button>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 const TOTAL_EASY =
   CODING_PROBLEMS.filter((p) => p.difficulty === "Easy").length || 20;
 const TOTAL_MEDIUM =
@@ -303,14 +603,19 @@ const TOTAL_MEDIUM =
 const TOTAL_HARD =
   CODING_PROBLEMS.filter((p) => p.difficulty === "Hard").length || 10;
 
+const POSTS_PER_PAGE = 12;
+
 export default function UserProfilePage({
   targetUsername,
 }: { targetUsername?: string }) {
-  const { user, setPage } = useApp();
+  const { user, setUser, setPage } = useApp();
 
   const viewingUsername: string =
     targetUsername || localStorage.getItem("cc_viewingUser") || user.username;
-  const isOwnProfile = !viewingUsername || viewingUsername === user.username;
+  const isOwnProfile =
+    !targetUsername &&
+    (!localStorage.getItem("cc_viewingUser") ||
+      localStorage.getItem("cc_viewingUser") === user.username);
 
   // ── Follow state ───────────────────────────────────────────────────────────
   const [isFollowing, setIsFollowing] = useState<boolean>(() => {
@@ -324,48 +629,231 @@ export default function UserProfilePage({
     }
   });
 
+  const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
+  const [postsVisible, setPostsVisible] = useState(POSTS_PER_PAGE);
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const [showFollowers, setShowFollowers] = useState(false);
-  const [showFollowing, setShowFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState<ProfileTab>("problems");
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [activeNote, setActiveNote] = useState<{
+    title: string;
+    content: string;
+    topic: string;
+    date: string;
+  } | null>(null);
 
-  // ── Counts ─────────────────────────────────────────────────────────────────
-  const ownFollowing = useMemo(() => {
-    try {
-      return (
-        JSON.parse(localStorage.getItem("followingList") ?? "[]") as string[]
-      ).length;
-    } catch {
-      return 0;
+  // Bio
+  const [profileBio] = useState(
+    () =>
+      localStorage.getItem("cc_profile_bio") ??
+      "CS enthusiast 💻 | Learning every day 🚀",
+  );
+
+  // ── Profile data ───────────────────────────────────────────────────────────
+  const profileData = isOwnProfile
+    ? user
+    : {
+        username: viewingUsername,
+        xp: 320,
+        level: 4,
+        streak: 12,
+        badges: ["first-problem", "streak-7"],
+        solvedProblems: ["1", "2", "5", "8", "12"],
+        enrolledCourses: ["frontend", "python"],
+        avatarConfig: null,
+      };
+
+  const solvedProblems = profileData.solvedProblems ?? [];
+  const enrolledCourses = profileData.enrolledCourses ?? [];
+  const badges = profileData.badges ?? [];
+  const totalXP = profileData.xp ?? 0;
+  const level = profileData.level ?? 1;
+  const percentile = calcPercentile(totalXP);
+
+  const followersCount = isOwnProfile
+    ? deterministicCount(user.username || "user", 480, 20)
+    : deterministicCount(viewingUsername, 480, 20);
+  const followingCount = isOwnProfile
+    ? (() => {
+        try {
+          return (
+            JSON.parse(
+              localStorage.getItem("followingList") ?? "[]",
+            ) as string[]
+          ).length;
+        } catch {
+          return 0;
+        }
+      })()
+    : deterministicCount(viewingUsername, 250, 10);
+  const postsCount = solvedProblems.length + badges.length;
+
+  // ── Solved by difficulty ───────────────────────────────────────────────────
+  const solvedByDiff = useMemo(() => {
+    const easy: typeof CODING_PROBLEMS = [];
+    const medium: typeof CODING_PROBLEMS = [];
+    const hard: typeof CODING_PROBLEMS = [];
+    for (const id of solvedProblems) {
+      const p = CODING_PROBLEMS.find((x) => String(x.id) === String(id));
+      if (!p) continue;
+      if (p.difficulty === "Easy") easy.push(p);
+      else if (p.difficulty === "Medium") medium.push(p);
+      else hard.push(p);
     }
-  }, []);
+    return { easy, medium, hard };
+  }, [solvedProblems]);
 
-  const displayFollowers = isOwnProfile
-    ? getFollowersCount(user.username)
-    : getFollowersCount(viewingUsername);
-  const displayFollowing = isOwnProfile
-    ? ownFollowing
-    : getFollowingCount(viewingUsername);
+  // ── Posts (3-col grid) ─────────────────────────────────────────────────────
+  const allPosts: PostItem[] = useMemo(() => {
+    const posts: PostItem[] = [];
 
-  const followersList: string[] = useMemo(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem(`cc_followers_list_${viewingUsername}`) ?? "[]",
-      );
-    } catch {
-      return [];
+    // Solved problems as posts
+    for (const id of solvedProblems) {
+      const p = CODING_PROBLEMS.find((x) => String(x.id) === String(id));
+      if (!p) continue;
+      const gradIdx = posts.length % POST_GRADIENTS.length;
+      posts.push({
+        id: `prob-${p.id}`,
+        title: p.title,
+        subtitle: p.difficulty,
+        gradient: POST_GRADIENTS[gradIdx],
+        diffColor: DIFF_COLORS[p.difficulty as keyof typeof DIFF_COLORS],
+        icon:
+          p.difficulty === "Easy"
+            ? "✅"
+            : p.difficulty === "Medium"
+              ? "⚡"
+              : "🔥",
+      });
     }
-  }, [viewingUsername]);
 
-  const followingList: string[] = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("followingList") ?? "[]");
-    } catch {
-      return [];
+    // Badges as posts
+    for (const badgeId of badges) {
+      const meta = BADGE_META[badgeId];
+      if (!meta) continue;
+      const gradIdx = posts.length % POST_GRADIENTS.length;
+      posts.push({
+        id: `badge-${badgeId}`,
+        title: meta.label,
+        subtitle: "Badge earned",
+        gradient: POST_GRADIENTS[gradIdx],
+        icon: meta.icon,
+      });
     }
-  }, []);
+
+    return posts;
+  }, [solvedProblems, badges]);
+
+  // ── Notes ──────────────────────────────────────────────────────────────────
+  const notes = useMemo(() => {
+    try {
+      const stored =
+        localStorage.getItem(`cc_notes_${viewingUsername}`) ??
+        (isOwnProfile ? localStorage.getItem("cc_notes_all") : null);
+      if (stored)
+        return JSON.parse(stored) as Array<{
+          id: string;
+          title: string;
+          content: string;
+          topic: string;
+          date: string;
+        }>;
+    } catch {}
+    // Simulated notes
+    return [
+      {
+        id: "n1",
+        title: "Binary Search Notes",
+        content:
+          "Binary search works by repeatedly dividing the search space in half. Time complexity: O(log n). Space: O(1).",
+        topic: "Algorithms",
+        date: "Jan 2025",
+      },
+      {
+        id: "n2",
+        title: "React Hooks Summary",
+        content:
+          "useState, useEffect, useContext, useMemo, useCallback — all the essential hooks and when to use them.",
+        topic: "Frontend",
+        date: "Feb 2025",
+      },
+      {
+        id: "n3",
+        title: "Python List Comprehensions",
+        content:
+          "[x*2 for x in range(10) if x % 2 == 0] — powerful one-liner patterns for filtering and mapping.",
+        topic: "Python",
+        date: "Mar 2025",
+      },
+    ];
+  }, [viewingUsername, isOwnProfile]);
+
+  // ── Highlights data ────────────────────────────────────────────────────────
+  const highlights = useMemo(
+    () => ({
+      solved: {
+        icon: "🏆",
+        title: "Solved",
+        items: solvedProblems.slice(0, 10).map((id, i) => {
+          const p = CODING_PROBLEMS.find((x) => String(x.id) === String(id));
+          return {
+            id: `s-${i}`,
+            title: p?.title ?? `Problem #${id}`,
+            subtitle: p?.difficulty ?? "Unknown",
+            icon:
+              p?.difficulty === "Hard"
+                ? "🔥"
+                : p?.difficulty === "Medium"
+                  ? "⚡"
+                  : "✅",
+          };
+        }),
+      },
+      badges: {
+        icon: "🎖️",
+        title: "Badges",
+        items: badges.map((b, i) => {
+          const meta = BADGE_META[b] ?? { label: b, desc: "", icon: "🏅" };
+          return {
+            id: `b-${i}`,
+            title: meta.label,
+            subtitle: meta.desc,
+            icon: meta.icon,
+          };
+        }),
+      },
+      projects: {
+        icon: "🚀",
+        title: "Projects",
+        items: enrolledCourses.slice(0, 5).map((c, i) => {
+          const meta = DOMAIN_META[c] ?? { icon: "📘", label: c };
+          const pct = getCourseProgress(c);
+          return {
+            id: `p-${i}`,
+            title: meta.label,
+            subtitle: `${pct}% complete`,
+            icon: meta.icon,
+          };
+        }),
+      },
+      notes: {
+        icon: "📝",
+        title: "Notes",
+        items: notes.slice(0, 5).map((n, i) => ({
+          id: `n-${i}`,
+          title: n.title,
+          subtitle: n.topic,
+          icon: "📝",
+        })),
+      },
+    }),
+    [solvedProblems, badges, enrolledCourses, notes],
+  );
+
+  const HIGHLIGHT_KEYS = ["solved", "badges", "projects", "notes"] as const;
 
   // ── Actions ────────────────────────────────────────────────────────────────
-  const followUser = () => {
+  const toggleFollow = () => {
     try {
       const list: string[] = JSON.parse(
         localStorage.getItem("followingList") ?? "[]",
@@ -386,92 +874,39 @@ export default function UserProfilePage({
   };
 
   const shareProfile = () => {
-    const url = `${window.location.href.split("?")[0]}?profile=${encodeURIComponent(viewingUsername)}`;
+    const url = `${window.location.origin}?profile=${encodeURIComponent(viewingUsername)}`;
     navigator.clipboard
       .writeText(url)
       .then(() => toast.success("Profile link copied! 🔗"))
-      .catch(() => toast.info(`Profile: ${url}`));
+      .catch(() => toast.info(`Share: ${url}`));
   };
 
-  const handleViewProfile = (username: string) => {
-    localStorage.setItem("cc_viewingUser", username);
-    setPage("profile");
+  const handleSaveProfile = (data: {
+    username: string;
+    bio: string;
+    displayName: string;
+  }) => {
+    setUser({ username: data.username });
+    localStorage.setItem("cc_profile_bio", data.bio);
   };
 
-  // ── Profile data ───────────────────────────────────────────────────────────
-  const profileData = isOwnProfile
-    ? user
-    : {
-        username: viewingUsername,
-        xp: 320,
-        level: 4,
-        streak: 12,
-        badges: ["first-problem", "streak-7"],
-        solvedProblems: ["1", "2", "5", "8", "12"],
-        enrolledCourses: ["frontend", "python"],
-        avatarConfig: null,
-      };
-
-  const solvedProblems = profileData.solvedProblems ?? [];
-  const enrolledCourses = profileData.enrolledCourses ?? [];
-  const badges = profileData.badges ?? [];
-
-  const solvedByDiff = useMemo(() => {
-    const easy: typeof CODING_PROBLEMS = [];
-    const medium: typeof CODING_PROBLEMS = [];
-    const hard: typeof CODING_PROBLEMS = [];
-    for (const id of solvedProblems) {
-      const p = CODING_PROBLEMS.find((x) => String(x.id) === String(id));
-      if (!p) continue;
-      if (p.difficulty === "Easy") easy.push(p);
-      else if (p.difficulty === "Medium") medium.push(p);
-      else hard.push(p);
-    }
-    return { easy, medium, hard };
-  }, [solvedProblems]);
-
-  const totalXP = profileData.xp ?? 0;
-  const level = profileData.level ?? 1;
-  const streak = profileData.streak ?? 0;
-  const xpInLevel = totalXP % 100;
-  const percentile = calcPercentile(totalXP);
-
-  const userPosts = useMemo(() => {
-    try {
-      const all = JSON.parse(
-        localStorage.getItem("cc_user_experiences") ?? "[]",
-      );
-      return (
-        all as Array<{
-          authorName: string;
-          id: string;
-          company: string;
-          role: string;
-          outcome: string;
-          date: string;
-        }>
-      ).filter(
-        (e) => e.authorName?.toLowerCase() === viewingUsername.toLowerCase(),
-      );
-    } catch {
-      return [];
-    }
-  }, [viewingUsername]);
-
-  const TABS: { id: ProfileTab; label: string }[] = [
-    { id: "problems", label: "Problems" },
-    { id: "badges", label: "Badges" },
-    { id: "courses", label: "Courses" },
-    { id: "posts", label: "Posts" },
+  // ── Tabs config ────────────────────────────────────────────────────────────
+  const TABS: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
+    { id: "posts", label: "Posts", icon: <Grid3X3 className="w-4 h-4" /> },
+    { id: "solved", label: "Solved", icon: <Code className="w-4 h-4" /> },
+    { id: "badges", label: "Badges", icon: <Trophy className="w-4 h-4" /> },
+    { id: "notes", label: "Notes", icon: <FileText className="w-4 h-4" /> },
   ];
+
+  const visiblePosts = allPosts.slice(0, postsVisible);
 
   return (
     <div
       className="h-screen bg-background flex flex-col overflow-hidden"
       data-ocid="profile.page"
     >
-      {/* Header */}
-      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0">
+      {/* ── Top Header ── */}
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0 z-10">
         <Button
           variant="ghost"
           size="icon"
@@ -481,478 +916,677 @@ export default function UserProfilePage({
           }}
           className="rounded-xl text-foreground shrink-0"
           data-ocid="profile.back_button"
-          aria-label="Back to Dashboard"
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-foreground text-base truncate">
-            {isOwnProfile ? "My Profile" : `${viewingUsername}'s Profile`}
+          <p className="text-xs text-muted-foreground">Profile</p>
+          <h1 className="font-bold text-foreground text-sm leading-none mt-0.5 truncate">
+            @{isOwnProfile ? user.username || "you" : viewingUsername}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
-          {!isOwnProfile ? (
-            <Button
-              size="sm"
-              variant={isFollowing ? "outline" : "default"}
-              onClick={followUser}
-              className="rounded-full gap-1.5 text-xs"
-              data-ocid="profile.follow_button"
-            >
-              {isFollowing ? (
-                <>
-                  <UserMinus className="w-3.5 h-3.5" /> Unfollow
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-3.5 h-3.5" /> Follow
-                </>
-              )}
-            </Button>
-          ) : (
-            <span
-              className="text-xs text-muted-foreground px-3 py-1.5 border border-border rounded-full flex items-center gap-1"
-              data-ocid="profile.edit_label"
-            >
-              <Edit className="w-3 h-3" /> Your Profile
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={shareProfile}
-            className="rounded-xl"
-            data-ocid="profile.share_button"
-            aria-label="Share profile"
-          >
-            <Share2 className="w-4 h-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={shareProfile}
+          className="rounded-xl text-muted-foreground"
+          data-ocid="profile.share_button"
+          aria-label="Share profile"
+        >
+          <Share2 className="w-4 h-4" />
+        </Button>
       </header>
 
+      {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-5 space-y-4 pb-24">
-          {/* Profile Hero */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-2xl p-5"
-            data-ocid="profile.hero_card"
-          >
-            <div className="flex items-start gap-4">
-              <WhatsAppAvatar
-                config={profileData.avatarConfig ?? DEFAULT_AVATAR_CONFIG}
-                size={72}
-              />
-              <div className="flex-1 min-w-0">
-                <h2 className="font-extrabold text-foreground text-xl truncate">
-                  {profileData.username || "Anonymous"}
-                </h2>
-                <p className="text-muted-foreground text-xs mt-0.5 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" /> Joined{" "}
-                  {isOwnProfile && user.email ? formatDate() : "Jan 2025"}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="flex items-center gap-1 text-xs font-bold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-full">
-                    <Zap className="w-3 h-3" /> Level {level}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800 px-2.5 py-1 rounded-full">
-                    <Flame className="w-3 h-3" /> {streak} day streak
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800 px-2.5 py-1 rounded-full">
-                    <Star className="w-3 h-3" /> {totalXP} XP
-                  </span>
-                </div>
-              </div>
-            </div>
+        {/* ── Profile Header ── */}
+        <div className="px-4 pt-5 pb-4">
+          {/* Avatar + Stats row */}
+          <div className="flex items-center gap-5 mb-4">
+            <AvatarRing
+              config={profileData.avatarConfig ?? DEFAULT_AVATAR_CONFIG}
+              size={82}
+              active={isOwnProfile}
+              onClick={() => isOwnProfile && setShowEditProfile(true)}
+            />
 
-            {/* XP Bar */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                <span>Progress to Level {level + 1}</span>
-                <span>{xpInLevel}/100 XP</span>
-              </div>
-              <Progress value={xpInLevel} className="h-2" />
-            </div>
-
-            {/* Followers / Following row — clickable */}
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/60">
+            {/* Stats */}
+            <div className="flex-1 flex justify-around">
               <button
                 type="button"
+                className="flex flex-col items-center group"
                 onClick={() => setShowFollowers(true)}
-                className="text-center hover:text-primary transition-colors group"
-                data-ocid="profile.followers_button"
+                data-ocid="profile.stats.posts_button"
               >
-                <p className="text-base font-extrabold text-foreground group-hover:text-primary">
-                  {displayFollowers}
-                </p>
-                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <Users className="w-3 h-3" /> Followers
-                </p>
+                <span className="text-lg font-extrabold text-foreground leading-none">
+                  {postsCount}
+                </span>
+                <span className="text-xs text-muted-foreground mt-0.5 group-hover:text-primary transition-colors">
+                  Posts
+                </span>
               </button>
-              <div className="w-px h-8 bg-border" />
               <button
                 type="button"
-                onClick={() => setShowFollowing(true)}
-                className="text-center hover:text-primary transition-colors group"
-                data-ocid="profile.following_button"
+                className="flex flex-col items-center group"
+                onClick={() => setShowFollowers(true)}
+                data-ocid="profile.stats.followers_button"
               >
-                <p className="text-base font-extrabold text-foreground group-hover:text-primary">
-                  {displayFollowing}
-                </p>
-                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <UserCheck className="w-3 h-3" /> Following
-                </p>
+                <span className="text-lg font-extrabold text-foreground leading-none">
+                  {followersCount}
+                </span>
+                <span className="text-xs text-muted-foreground mt-0.5 group-hover:text-primary transition-colors">
+                  Followers
+                </span>
               </button>
-              <div className="w-px h-8 bg-border" />
-              <div className="text-center">
-                <p className="text-base font-extrabold text-foreground">
-                  {solvedProblems.length}
-                </p>
-                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <Code className="w-3 h-3" /> Solved
-                </p>
-              </div>
               <button
                 type="button"
+                className="flex flex-col items-center group"
+                onClick={() => setShowFollowingModal(true)}
+                data-ocid="profile.stats.following_button"
+              >
+                <span className="text-lg font-extrabold text-foreground leading-none">
+                  {followingCount}
+                </span>
+                <span className="text-xs text-muted-foreground mt-0.5 group-hover:text-primary transition-colors">
+                  Following
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Name + Bio */}
+          <div className="mb-3">
+            <p className="font-extrabold text-foreground text-sm">
+              {isOwnProfile
+                ? user.username || "Code & Crush User"
+                : viewingUsername}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className="text-xs bg-primary/15 text-primary border border-primary/25 px-2 py-0.5 rounded-full font-semibold">
+                Level {level}
+              </span>
+              <span className="text-xs bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full">
+                Top {100 - percentile + 1}%
+              </span>
+              <span className="text-xs text-yellow-400 font-bold">
+                {totalXP} XP ⚡
+              </span>
+            </div>
+            <p className="text-sm text-foreground/80 mt-2 leading-relaxed">
+              {profileBio}
+            </p>
+          </div>
+
+          {/* Action buttons */}
+          {isOwnProfile ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full rounded-xl font-semibold"
+              onClick={() => setShowEditProfile(true)}
+              data-ocid="profile.edit_profile_button"
+            >
+              <Pencil className="w-3.5 h-3.5 mr-1.5" />
+              Edit Profile
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={isFollowing ? "outline" : "default"}
+                className="flex-1 rounded-xl font-semibold"
+                onClick={toggleFollow}
+                data-ocid="profile.follow_button"
+              >
+                {isFollowing ? (
+                  <>
+                    <UserMinus className="w-3.5 h-3.5 mr-1.5" /> Following
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Follow
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 rounded-xl font-semibold"
+                onClick={() => setPage("social-feed")}
+                data-ocid="profile.message_button"
+              >
+                <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                Message
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-xl"
                 onClick={shareProfile}
-                className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary border border-border rounded-full px-3 py-1.5 transition-colors"
-                data-ocid="profile.copy_link_button"
+                data-ocid="profile.share_secondary_button"
+                aria-label="Share"
               >
-                <Copy className="w-3 h-3" /> Copy Link
-              </button>
+                <Share2 className="w-4 h-4" />
+              </Button>
             </div>
-          </motion.div>
+          )}
+        </div>
 
-          {/* Peer Comparison */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-4"
-            data-ocid="profile.peer_comparison"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shrink-0">
-                <Trophy className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground font-medium mb-0.5">
-                  Peer Comparison
-                </p>
-                <p className="text-sm font-extrabold text-foreground">
-                  {isOwnProfile ? "You are" : `${viewingUsername} is`} in the{" "}
-                  <span className="text-primary">
-                    top {100 - percentile + 1}%
-                  </span>{" "}
-                  of learners on codeWithcrush
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Based on {totalXP} XP earned across all courses
-                </p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-2xl font-extrabold text-primary">
-                  #{percentile}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Rank</p>
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-                <span>0 XP</span>
-                <span>Top learners</span>
-              </div>
-              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min(100, (totalXP / 5000) * 100)}%` }}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Difficulty Rings */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="bg-card border border-border rounded-2xl p-5"
-            data-ocid="profile.difficulty_rings"
-          >
-            <h3 className="font-bold text-foreground mb-4 text-sm flex items-center gap-2">
-              <Code className="w-4 h-4 text-primary" /> Problem Difficulty
-              Breakdown
-            </h3>
-            <div className="flex items-center justify-around">
-              <DifficultyRing
-                label="Easy"
-                solved={solvedByDiff.easy.length}
-                total={TOTAL_EASY}
-                color="#22c55e"
-                trackColor="rgba(34,197,94,0.15)"
-              />
-              <DifficultyRing
-                label="Medium"
-                solved={solvedByDiff.medium.length}
-                total={TOTAL_MEDIUM}
-                color="#eab308"
-                trackColor="rgba(234,179,8,0.15)"
-              />
-              <DifficultyRing
-                label="Hard"
-                solved={solvedByDiff.hard.length}
-                total={TOTAL_HARD}
-                color="#ef4444"
-                trackColor="rgba(239,68,68,0.15)"
-              />
-            </div>
-          </motion.div>
-
-          {/* Tabbed Sections */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12 }}
-            className="bg-card border border-border rounded-2xl overflow-hidden"
-            data-ocid="profile.tabs_section"
-          >
-            <div className="flex border-b border-border">
-              {TABS.map((tab) => (
+        {/* ── Story Highlights ── */}
+        <div className="px-4 pb-4">
+          <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-none">
+            {HIGHLIGHT_KEYS.map((key) => {
+              const h = highlights[key];
+              return (
                 <button
                   type="button"
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-3 text-xs font-semibold border-b-2 transition-colors ${
-                    activeTab === tab.id
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                  data-ocid={`profile.tab_${tab.id}`}
+                  key={key}
+                  className="flex flex-col items-center gap-1.5 shrink-0"
+                  onClick={() => setActiveHighlight(key)}
+                  data-ocid={`profile.highlight.${key}`}
                 >
-                  {tab.label}
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 border-2 border-border flex items-center justify-center text-2xl hover:border-primary transition-colors">
+                    {h.icon}
+                  </div>
+                  <span className="text-[11px] text-foreground/80 font-medium w-16 text-center truncate">
+                    {h.title}
+                  </span>
                 </button>
-              ))}
-            </div>
-            <div className="p-4">
-              {/* Problems */}
-              {activeTab === "problems" && (
-                <div data-ocid="profile.problems_panel">
-                  {solvedProblems.length === 0 ? (
-                    <div
-                      className="text-center py-8 text-muted-foreground text-sm"
-                      data-ocid="profile.problems.empty_state"
-                    >
-                      <Code className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p>No problems solved yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {(
-                        [
-                          { label: "Easy", items: solvedByDiff.easy },
-                          { label: "Medium", items: solvedByDiff.medium },
-                          { label: "Hard", items: solvedByDiff.hard },
-                        ] as const
-                      ).map(
-                        ({ label, items }) =>
-                          items.length > 0 && (
-                            <div key={label}>
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <span
-                                  className={`text-xs font-bold px-2 py-0.5 rounded-full border ${DIFF_COLORS[label]}`}
-                                >
-                                  {label}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {items.length} solved
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {items.slice(0, 8).map((p) => (
-                                  <span
-                                    key={p.id}
-                                    className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-lg border border-border truncate max-w-[160px]"
-                                    title={p.title}
-                                  >
-                                    {p.title}
-                                  </span>
-                                ))}
-                                {items.length > 8 && (
-                                  <span className="text-xs text-muted-foreground px-2 py-1">
-                                    +{items.length - 8} more
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ),
-                      )}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Divider ── */}
+        <div className="h-px bg-border mx-0" />
+
+        {/* ── XP Progress bar ── */}
+        <div className="px-4 py-3 bg-card/50">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+            <span className="flex items-center gap-1">
+              <Zap className="w-3 h-3 text-primary" /> Level {level}
+            </span>
+            <span>
+              {totalXP % 100}/100 XP to Level {level + 1}
+            </span>
+          </div>
+          <Progress value={totalXP % 100} className="h-1.5" />
+        </div>
+
+        {/* ── Tab Bar ── */}
+        <div className="flex border-b border-border sticky top-0 bg-background z-10">
+          {TABS.map((tab) => (
+            <button
+              type="button"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              data-ocid={`profile.tab.${tab.id}`}
+            >
+              {tab.icon}
+              <span className="text-[10px] font-semibold hidden sm:block">
+                {tab.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Tab Content ── */}
+        <div className="pb-28">
+          {/* POSTS TAB */}
+          {activeTab === "posts" && (
+            <div data-ocid="profile.posts_panel">
+              {allPosts.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center py-20 text-muted-foreground"
+                  data-ocid="profile.posts.empty_state"
+                >
+                  <Grid3X3 className="w-12 h-12 mb-3 opacity-30" />
+                  <p className="font-semibold text-sm">No Posts Yet</p>
+                  <p className="text-xs mt-1">
+                    Solve problems to create your first post
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-px bg-border">
+                    {visiblePosts.map((post, i) => (
+                      <PostGridItem
+                        key={post.id}
+                        post={post}
+                        index={i}
+                        onClick={() => toast.info(post.title)}
+                      />
+                    ))}
+                  </div>
+                  {allPosts.length > postsVisible && (
+                    <div className="p-4 text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full px-6"
+                        onClick={() =>
+                          setPostsVisible((v) => v + POSTS_PER_PAGE)
+                        }
+                        data-ocid="profile.posts.load_more_button"
+                      >
+                        Load More
+                      </Button>
                     </div>
                   )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* SOLVED TAB */}
+          {activeTab === "solved" && (
+            <div
+              className="px-4 py-4 space-y-5"
+              data-ocid="profile.solved_panel"
+            >
+              {/* Difficulty rings row */}
+              <div className="flex justify-around py-4 bg-card border border-border rounded-2xl">
+                {(["Easy", "Medium", "Hard"] as const).map((diff) => {
+                  const items =
+                    solvedByDiff[
+                      diff.toLowerCase() as "easy" | "medium" | "hard"
+                    ];
+                  const total =
+                    diff === "Easy"
+                      ? TOTAL_EASY
+                      : diff === "Medium"
+                        ? TOTAL_MEDIUM
+                        : TOTAL_HARD;
+                  const radius = 26;
+                  const circ = 2 * Math.PI * radius;
+                  const pct = total > 0 ? Math.min(items.length / total, 1) : 0;
+                  const color =
+                    diff === "Easy"
+                      ? "#22c55e"
+                      : diff === "Medium"
+                        ? "#eab308"
+                        : "#ef4444";
+                  const trackColor =
+                    diff === "Easy"
+                      ? "rgba(34,197,94,0.15)"
+                      : diff === "Medium"
+                        ? "rgba(234,179,8,0.15)"
+                        : "rgba(239,68,68,0.15)";
+                  return (
+                    <div
+                      key={diff}
+                      className="flex flex-col items-center gap-1.5"
+                    >
+                      <div className="relative w-16 h-16">
+                        <svg
+                          className="w-full h-full -rotate-90"
+                          viewBox="0 0 64 64"
+                          role="img"
+                          aria-label={`${diff}: ${items.length}/${total}`}
+                        >
+                          <title>{`${diff}: ${items.length}/${total}`}</title>
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r={radius}
+                            fill="none"
+                            stroke={trackColor}
+                            strokeWidth="6"
+                          />
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r={radius}
+                            fill="none"
+                            stroke={color}
+                            strokeWidth="6"
+                            strokeDasharray={circ}
+                            strokeDashoffset={circ * (1 - pct)}
+                            strokeLinecap="round"
+                            style={{
+                              transition: "stroke-dashoffset 0.8s ease",
+                            }}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-base font-extrabold text-foreground leading-none">
+                            {items.length}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground">
+                            /{total}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {diff}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Grouped by difficulty */}
+              {solvedProblems.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center py-12 text-muted-foreground"
+                  data-ocid="profile.solved.empty_state"
+                >
+                  <Code className="w-12 h-12 mb-3 opacity-30" />
+                  <p className="font-semibold text-sm">
+                    No Problems Solved Yet
+                  </p>
+                  <p className="text-xs mt-1">
+                    Start solving in the Problems section
+                  </p>
+                </div>
+              ) : (
+                (["Easy", "Medium", "Hard"] as const).map((diff) => {
+                  const items =
+                    solvedByDiff[
+                      diff.toLowerCase() as "easy" | "medium" | "hard"
+                    ];
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={diff}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge
+                          className={`text-xs font-bold border ${DIFF_COLORS[diff]}`}
+                          variant="outline"
+                        >
+                          {diff}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {items.length} solved
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {items.map((p, i) => (
+                          <div
+                            key={p.id}
+                            className="flex items-center gap-3 px-3 py-2.5 bg-card border border-border rounded-xl"
+                            data-ocid={`profile.solved.item.${i + 1}`}
+                          >
+                            <div
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                diff === "Easy"
+                                  ? "bg-green-500"
+                                  : diff === "Medium"
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
+                              }`}
+                            />
+                            <span className="flex-1 text-sm font-medium text-foreground truncate">
+                              {p.title}
+                            </span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              #{p.id}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* BADGES TAB */}
+          {activeTab === "badges" && (
+            <div className="px-4 py-4" data-ocid="profile.badges_panel">
+              {/* Earned */}
+              {badges.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                    Earned Badges
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {badges.map((badgeId, idx) => {
+                      const meta = BADGE_META[badgeId] ?? {
+                        icon: "🏅",
+                        label: badgeId,
+                        desc: "",
+                        color:
+                          "from-muted/30 to-muted/50 border-border text-muted-foreground",
+                      };
+                      return (
+                        <div
+                          key={`${badgeId}-${idx}`}
+                          className={`flex items-center gap-3 p-3.5 rounded-2xl border bg-gradient-to-br ${meta.color}`}
+                          data-ocid={`profile.badge.${idx + 1}`}
+                        >
+                          <span className="text-3xl shrink-0">{meta.icon}</span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold truncate">
+                              {meta.label}
+                            </div>
+                            <div className="text-[10px] opacity-70 mt-0.5 leading-tight">
+                              {meta.desc}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-              {/* Badges */}
-              {activeTab === "badges" && (
-                <div data-ocid="profile.badges_panel">
-                  {badges.length === 0 ? (
-                    <div
-                      className="text-center py-8 text-muted-foreground text-sm"
-                      data-ocid="profile.badges.empty_state"
-                    >
-                      <Trophy className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p>No badges yet — keep learning!</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {badges.map((badgeId, idx) => {
+
+              {/* Locked badges */}
+              {badges.length < ALL_BADGES.length && (
+                <div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                    Locked Badges
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {ALL_BADGES.filter((b) => !badges.includes(b)).map(
+                      (badgeId, idx) => {
                         const meta = BADGE_META[badgeId] ?? {
                           icon: "🏅",
                           label: badgeId,
-                          color: "text-muted-foreground bg-muted border-border",
+                          desc: "",
                         };
                         return (
                           <div
-                            key={`${badgeId}-${idx}`}
-                            className={`flex items-center gap-2.5 p-3 rounded-xl border ${meta.color}`}
-                            data-ocid={`profile.badge.${idx + 1}`}
+                            key={`locked-${badgeId}`}
+                            className="flex items-center gap-3 p-3.5 rounded-2xl border border-border bg-muted/20 opacity-50"
+                            data-ocid={`profile.locked_badge.${idx + 1}`}
                           >
-                            <span className="text-2xl shrink-0">
-                              {meta.icon}
-                            </span>
+                            <div className="relative shrink-0">
+                              <span className="text-3xl grayscale">
+                                {meta.icon}
+                              </span>
+                              <Lock className="absolute -bottom-0.5 -right-0.5 w-3 h-3 text-muted-foreground bg-card rounded-full p-0.5" />
+                            </div>
                             <div className="min-w-0">
-                              <div className="text-xs font-bold truncate">
+                              <div className="text-xs font-bold truncate text-muted-foreground">
                                 {meta.label}
                               </div>
-                              <div className="text-[10px] opacity-70">
-                                Earned
+                              <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">
+                                {meta.desc}
                               </div>
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
-                  )}
+                      },
+                    )}
+                  </div>
                 </div>
               )}
-              {/* Courses */}
-              {activeTab === "courses" && (
-                <div data-ocid="profile.courses_panel">
-                  {enrolledCourses.length === 0 ? (
-                    <div
-                      className="text-center py-8 text-muted-foreground text-sm"
-                      data-ocid="profile.courses.empty_state"
-                    >
-                      <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p>No courses enrolled yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {enrolledCourses.map((courseId, idx) => {
-                        const meta = DOMAIN_META[courseId] ?? {
-                          icon: "📘",
-                          label: courseId,
-                        };
-                        const pct = getCourseProgress(courseId);
-                        return (
-                          <div
-                            key={courseId}
-                            className="flex items-center gap-3"
-                            data-ocid={`profile.course.${idx + 1}`}
-                          >
-                            <span className="text-2xl shrink-0">
-                              {meta.icon}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-semibold text-foreground truncate">
-                                  {meta.label}
-                                </span>
-                                <span className="text-xs font-bold text-primary ml-2 shrink-0">
-                                  {pct}%
-                                </span>
-                              </div>
-                              <Progress value={pct} className="h-1.5" />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Posts */}
-              {activeTab === "posts" && (
-                <div data-ocid="profile.posts_panel">
-                  {userPosts.length === 0 ? (
-                    <div
-                      className="text-center py-8 text-muted-foreground text-sm"
-                      data-ocid="profile.posts.empty_state"
-                    >
-                      <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p>No experiences shared yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {userPosts.map(
-                        (
-                          post: {
-                            id: string;
-                            company: string;
-                            role: string;
-                            outcome: string;
-                            date: string;
-                          },
-                          idx: number,
-                        ) => (
-                          <div
-                            key={post.id}
-                            className="bg-muted/40 border border-border rounded-xl p-3"
-                            data-ocid={`profile.post.${idx + 1}`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-bold text-foreground">
-                                💼 {post.company}
-                              </span>
-                              <Badge variant="outline" className="text-[10px]">
-                                {post.outcome}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {post.role} ·{" "}
-                              {new Date(`${post.date}-01`).toLocaleDateString(
-                                "en-US",
-                                { month: "short", year: "numeric" },
-                              )}
-                            </p>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  )}
+
+              {badges.length === 0 && (
+                <div
+                  className="flex flex-col items-center justify-center py-12 text-muted-foreground"
+                  data-ocid="profile.badges.empty_state"
+                >
+                  <Trophy className="w-12 h-12 mb-3 opacity-30" />
+                  <p className="font-semibold text-sm">No Badges Yet</p>
+                  <p className="text-xs mt-1 text-center max-w-[200px]">
+                    Complete challenges and courses to earn badges
+                  </p>
                 </div>
               )}
             </div>
-          </motion.div>
+          )}
+
+          {/* NOTES TAB */}
+          {activeTab === "notes" && (
+            <div
+              className="px-4 py-4 space-y-3"
+              data-ocid="profile.notes_panel"
+            >
+              {notes.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center py-12 text-muted-foreground"
+                  data-ocid="profile.notes.empty_state"
+                >
+                  <FileText className="w-12 h-12 mb-3 opacity-30" />
+                  <p className="font-semibold text-sm">No Notes Yet</p>
+                  <p className="text-xs mt-1">
+                    Take notes while studying to see them here
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Group by topic */}
+                  {(() => {
+                    const grouped: Record<string, typeof notes> = {};
+                    for (const n of notes) {
+                      grouped[n.topic] = [...(grouped[n.topic] ?? []), n];
+                    }
+                    return Object.entries(grouped).map(
+                      ([topic, topicNotes]) => (
+                        <div key={topic}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <BookOpen className="w-3.5 h-3.5 text-primary" />
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {topic}
+                            </h4>
+                          </div>
+                          <div className="space-y-2">
+                            {topicNotes.map((note, i) => (
+                              <button
+                                type="button"
+                                key={note.id}
+                                className="w-full text-left bg-card border border-border rounded-xl p-3.5 hover:border-primary/40 transition-colors"
+                                onClick={() => setActiveNote(note)}
+                                data-ocid={`profile.note.${i + 1}`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-foreground truncate">
+                                      {note.title}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                      {note.content}
+                                    </p>
+                                  </div>
+                                  <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
+                                    {note.date}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ),
+                    );
+                  })()}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Followers / Following Modals */}
+      {/* ── Modals ── */}
       <AnimatePresence>
-        {showFollowers && (
-          <UserListModal
-            title={`Followers (${displayFollowers})`}
-            users={followersList}
-            onClose={() => setShowFollowers(false)}
-            onViewProfile={handleViewProfile}
+        {activeHighlight && (
+          <HighlightViewer
+            category={{
+              icon: highlights[activeHighlight as keyof typeof highlights].icon,
+              title:
+                highlights[activeHighlight as keyof typeof highlights].title,
+            }}
+            items={highlights[activeHighlight as keyof typeof highlights].items}
+            onClose={() => setActiveHighlight(null)}
           />
         )}
-        {showFollowing && (
-          <UserListModal
-            title={`Following (${displayFollowing})`}
-            users={followingList}
-            onClose={() => setShowFollowing(false)}
-            onViewProfile={handleViewProfile}
+        {showEditProfile && isOwnProfile && (
+          <EditProfileModal
+            user={user}
+            onSave={handleSaveProfile}
+            onClose={() => setShowEditProfile(false)}
           />
+        )}
+        {activeNote && (
+          <NoteModal note={activeNote} onClose={() => setActiveNote(null)} />
+        )}
+        {(showFollowers || showFollowingModal) && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowFollowers(false);
+                setShowFollowingModal(false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl"
+              data-ocid="profile.followers_modal.dialog"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <h3 className="font-bold text-foreground">
+                  {showFollowers
+                    ? `Followers (${followersCount})`
+                    : `Following (${followingCount})`}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFollowers(false);
+                    setShowFollowingModal(false);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                  data-ocid="profile.followers_modal.close_button"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 text-center text-muted-foreground text-sm py-8">
+                <p className="text-xs">
+                  User list is private. Connect with people in the community
+                  feed!
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 rounded-full"
+                  onClick={() => {
+                    setShowFollowers(false);
+                    setShowFollowingModal(false);
+                    setPage("social-feed");
+                  }}
+                  data-ocid="profile.followers_modal.explore_button"
+                >
+                  Explore Community
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

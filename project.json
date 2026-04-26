@@ -1,29 +1,29 @@
 {
-  "overview": "codeWithcrush is an AI-powered gamified Computer Science learning platform that blends dating-sim style interactions with advanced AI teaching. Users engage with cartoon avatar companions, solve coding challenges across 15+ domains, earn XP and rewards, and connect with a social community — all with voice and ChatGPT-quality AI responses.",
+  "overview": "Code & Crush is an AI-powered gamified Computer Science learning platform that blends companion interactions with advanced teaching, emotional support, and a robust social community. Users create full-body avatars, engage in CS quizzes, coding challenges, and project-based tasks while earning XP and rewards.",
   "features": [
-    "15+ structured CS domains with Module 0 orientation, 5+ modules, quizzes, and certificates",
-    "Meta AI-style chatbot with animated bubbles, quick-reply suggestions, and behaviour-adaptive responses",
-    "Two-way voice chat — user mic + ElevenLabs AI voice",
-    "Code correctness checker across compiler, problems, practice, and tests",
-    "GeeksforGeeks-depth Documentation Hub with 120+ topics and Try it Yourself editors",
-    "LinkedIn-style direct messaging between users with typing indicators",
-    "Instagram-style avatar store with 75+ items, real-time preview, and GCoins",
-    "Progress report showing completed projects, current activity, and upcoming goals",
-    "Samsung-level SEO with sitemap served from backend as real XML",
-    "Full responsive design for mobile, tablet, and desktop"
+    "Blueprints — interactive visual roadmap maps for all 15+ domains",
+    "TechNews — curated tech news feed (ACM-style)",
+    "TechMagazine — long-form tech articles (MIT Tech Review style)",
+    "Full-body male/female cartoon avatar builder",
+    "Instagram-style user profiles with posts grid and highlights",
+    "YouTube video fallback validator — no broken videos",
+    "Instagram-style search system — find users by username",
+    "Guidance/hints only in workspace — solution hidden below",
+    "Floating study agent — animated AI companion while studying",
+    "AI-powered chatbot with emotional companion mode",
+    "Gamification — XP, GCoins, badges, streaks, leaderboard",
+    "Documentation Hub — 120+ GeeksforGeeks-style articles"
   ],
   "category": "education",
   "tags": [
     "cs-learning",
-    "ai-tutor",
+    "ai-companion",
     "gamified",
     "coding",
-    "icp",
-    "voice-chat",
+    "roadmap",
     "avatar",
-    "geeksforgeeks-style",
-    "documentation",
-    "social-learning"
+    "social",
+    "tech-news"
   ],
-  "last_updated": "2026-04-22T14:22:38.513Z"
+  "last_updated": "2026-04-25T09:15:23.485Z"
 }

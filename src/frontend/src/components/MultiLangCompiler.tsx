@@ -592,12 +592,53 @@ export default function MultiLangCompiler() {
   const [snippets, setSnippets] = useState<CodeSnippet[]>(loadSnippets);
   const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
   const [showChecker, setShowChecker] = useState(false);
+  // Practice Mode toggle
+  type CompilerMode = "free" | "practice";
+  const [compilerMode, setCompilerMode] = useState<CompilerMode>("free");
+  const [practiceHints, setPracticeHints] = useState<string[]>([]);
+  const [hintsRevealed, setHintsRevealed] = useState(0);
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
     setCode(STARTER_CODE[lang] ?? `// Hello World in ${lang}`);
     setResult(null);
     setError(null);
+    setHintsRevealed(0);
+    // Set language-specific practice hints
+    const hints: Record<string, string[]> = {
+      python: [
+        "🔵 Consider the time complexity — can you solve it in O(n)?",
+        "🟡 Python lists have O(1) append and O(n) search. Use a dict for O(1) lookups.",
+        "🔴 Try using a dictionary to store values you've seen: `seen = {}`",
+      ],
+      javascript: [
+        "🔵 Think about what data structure gives you constant-time lookup.",
+        "🟡 A Map or plain object lets you check membership in O(1).",
+        "🔴 Consider: `const map = new Map(); map.set(key, value); map.has(key)`",
+      ],
+      java: [
+        "🔵 What's the most efficient way to check if an element exists in a collection?",
+        "🟡 HashMap in Java gives O(1) average-case put/get operations.",
+        "🔴 Try: `Map<Integer, Integer> map = new HashMap<>(); map.put(key, val);`",
+      ],
+      c: [
+        "🔵 Think about array bounds and pointer arithmetic carefully in C.",
+        "🟡 For searching, consider sorting first — O(n log n) then O(log n) binary search.",
+        "🔴 Use two-pointer technique: `int left = 0, right = n - 1;`",
+      ],
+      cpp: [
+        "🔵 STL provides powerful containers — which one fits your access pattern?",
+        "🟡 unordered_map gives O(1) average lookup vs O(log n) for map.",
+        "🔴 Try: `unordered_map<int, int> freq; freq[arr[i]]++;`",
+      ],
+    };
+    setPracticeHints(
+      hints[lang] ?? [
+        "🔵 Think about the time and space complexity of your approach.",
+        "🟡 Consider which data structure gives the best performance.",
+        "🔴 Start with a simple solution first, then optimize.",
+      ],
+    );
   };
 
   const handleRun = async () => {
@@ -716,8 +757,95 @@ export default function MultiLangCompiler() {
             </p>
           </div>
         </div>
-        <LangSelector selected={language} onChange={handleLanguageChange} />
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Mode Toggle */}
+          <div
+            className="flex items-center gap-1 bg-[#2a2a3e] border border-[#3a3a55] rounded-xl p-1"
+            data-ocid="compiler.mode.toggle"
+          >
+            <button
+              type="button"
+              onClick={() => setCompilerMode("free")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${compilerMode === "free" ? "bg-violet-600 text-white shadow-sm" : "text-gray-400 hover:text-white"}`}
+              data-ocid="compiler.mode.free"
+            >
+              Free Coding
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCompilerMode("practice");
+                if (practiceHints.length === 0) {
+                  handleLanguageChange(language);
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${compilerMode === "practice" ? "bg-amber-500 text-white shadow-sm" : "text-gray-400 hover:text-white"}`}
+              data-ocid="compiler.mode.practice"
+            >
+              🎯 Practice Mode
+            </button>
+          </div>
+          <LangSelector selected={language} onChange={handleLanguageChange} />
+        </div>
       </div>
+
+      {/* ── Practice Mode hints panel ── */}
+      <AnimatePresence>
+        {compilerMode === "practice" && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3"
+              data-ocid="compiler.practice.panel"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-amber-400 font-bold text-sm">
+                  🎯 Practice Mode
+                </span>
+                <span className="text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                  hints available · no direct solutions
+                </span>
+              </div>
+              <p className="text-xs text-amber-300/80">
+                I'll guide you toward the solution. Try writing your code first,
+                then reveal a hint if you're stuck. Check your solution with the
+                button below.
+              </p>
+              {/* Hints */}
+              <div className="space-y-2">
+                {practiceHints.slice(0, hintsRevealed).map((h, i) => (
+                  <div
+                    key={i}
+                    className="bg-[#1e1e2e] border border-[#3a3a55] rounded-lg px-3 py-2 text-xs text-gray-300"
+                  >
+                    {h}
+                  </div>
+                ))}
+                {hintsRevealed < practiceHints.length && (
+                  <button
+                    type="button"
+                    onClick={() => setHintsRevealed((n) => n + 1)}
+                    className="w-full text-xs text-amber-400 font-semibold py-2 rounded-lg border border-dashed border-amber-500/40 hover:border-amber-400 hover:bg-amber-500/10 transition-colors"
+                    data-ocid="compiler.practice.reveal_hint"
+                  >
+                    💡 Reveal Hint {hintsRevealed + 1} of {practiceHints.length}
+                  </button>
+                )}
+                {hintsRevealed >= practiceHints.length &&
+                  practiceHints.length > 0 && (
+                    <p className="text-xs text-center text-amber-400/60">
+                      All hints revealed — try your best!
+                    </p>
+                  )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Code Editor ── */}
       <CodeEditor value={code} onChange={setCode} language={langObj.name} />

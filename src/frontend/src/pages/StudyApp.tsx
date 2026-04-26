@@ -26,8 +26,10 @@ import {
   useRef,
   useState,
 } from "react";
+import GlobalSearchBar from "../components/GlobalSearchBar";
 import { useUnreadCount } from "../components/MessagingInbox";
 import MessagingSystem from "../components/MessagingSystem";
+import StudyAgent from "../components/StudyAgent";
 import WhatsAppAvatar from "../components/WhatsAppAvatar";
 import { useApp } from "../context/AppContext";
 import { COMPANION_PRESETS } from "../data/companions";
@@ -40,6 +42,7 @@ const DashboardPage = lazy(() => import("./DashboardPage"));
 const EventsPage = lazy(() => import("./EventsPage"));
 const ProblemsPage = lazy(() => import("./ProblemsPage"));
 const RoadmapPage = lazy(() => import("./RoadmapPage"));
+const SearchPage = lazy(() => import("./SearchPage"));
 
 function LoadingSpinner() {
   return (
@@ -391,6 +394,8 @@ export default function StudyApp() {
   const [activeTab, setActiveTab] = useState<BottomTab>("chat");
   const [breakTipIdx, setBreakTipIdx] = useState(0);
   const [showMessaging, setShowMessaging] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [conversationHistory, setConversationHistory] = useState<
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
@@ -797,6 +802,15 @@ export default function StudyApp() {
           <span className="text-sm text-muted-foreground hidden md:block">
             Hi, <strong className="text-foreground">{user.username}</strong>!
           </span>
+          {/* Search button */}
+          <GlobalSearchBar
+            isSearchOpen={false}
+            onOpenSearch={(q) => {
+              setSearchQuery(q);
+              setSearchOpen(true);
+            }}
+            onClose={() => setSearchOpen(false)}
+          />
           <Button
             data-ocid="study.messaging.button"
             variant="ghost"
@@ -1292,10 +1306,42 @@ export default function StudyApp() {
           })()}
       </AnimatePresence>
 
+      {/* Study Agent — floating AI tutor visible on Roadmap tab */}
+      <StudyAgent
+        activeTab={activeTab}
+        currentTopic={
+          activeTab === "modules" ? "Computer Science & Programming" : ""
+        }
+      />
+
       {/* Messaging System — full LinkedIn-style panel with 5s polling */}
       <AnimatePresence>
         {showMessaging && (
           <MessagingSystem onClose={() => setShowMessaging(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Search Page — full-screen overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SearchPage
+              initialQuery={searchQuery}
+              onClose={() => setSearchOpen(false)}
+              onNavigateToProblems={() => {
+                setSearchOpen(false);
+                setActiveTab("problems");
+              }}
+              onNavigateToRoadmap={() => {
+                setSearchOpen(false);
+                setActiveTab("modules");
+              }}
+              onNavigateToProfile={() => {
+                setSearchOpen(false);
+                setActiveTab("dashboard");
+              }}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>

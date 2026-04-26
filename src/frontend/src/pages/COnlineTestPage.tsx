@@ -1084,41 +1084,57 @@ function ResultsScreen({
             className="bg-card border border-border rounded-2xl p-5"
           >
             <h3 className="font-bold text-foreground text-sm mb-3">
-              📋 MCQ Breakdown
+              📋 Review Answers
             </h3>
-            <div className="space-y-2">
+            <p className="text-xs text-muted-foreground mb-3">
+              Full explanations are now available — outside test mode you'd also
+              have hint levels to help.
+            </p>
+            <div className="space-y-3">
               {mcqQuestions.map((q, qi) => {
                 const userAns = mcqAnswers[q.id];
                 const correct = userAns === q.correctIndex;
                 const skipped = userAns === undefined;
                 return (
-                  <div key={q.id} className="flex items-start gap-3 text-xs">
-                    <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0 font-bold text-[10px] ${
-                        skipped
-                          ? "bg-muted-foreground"
-                          : correct
-                            ? "bg-green-500"
-                            : "bg-red-500"
-                      }`}
-                    >
-                      {skipped ? "–" : correct ? "✓" : "✗"}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-foreground font-medium leading-snug">
+                  <div
+                    key={q.id}
+                    className={`rounded-xl border p-3 text-xs ${correct ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10" : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"}`}
+                  >
+                    <div className="flex items-start gap-2 mb-2">
+                      <span
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0 font-bold text-[10px] ${skipped ? "bg-muted-foreground" : correct ? "bg-green-500" : "bg-red-500"}`}
+                      >
+                        {skipped ? "–" : correct ? "✓" : "✗"}
+                      </span>
+                      <p className="text-foreground font-medium leading-snug flex-1">
                         Q{qi + 1}: {q.question}
                       </p>
-                      {!skipped && !correct && (
-                        <p className="text-green-500 mt-0.5">
-                          ✓ {q.options[q.correctIndex]}
-                        </p>
-                      )}
+                      <span
+                        className={`font-bold shrink-0 ${correct ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+                      >
+                        {correct ? "+5" : "0"}
+                      </span>
                     </div>
-                    <span
-                      className={`font-bold shrink-0 ${correct ? "text-green-500" : "text-muted-foreground"}`}
+                    {!skipped && !correct && (
+                      <p className="text-red-600 dark:text-red-400 mb-1 ml-7">
+                        Your answer: {q.options[userAns]}
+                      </p>
+                    )}
+                    <p
+                      className={`ml-7 mb-1 ${correct ? "text-green-700 dark:text-green-300" : "text-green-700 dark:text-green-300"}`}
                     >
-                      {correct ? "+5" : "0"}
-                    </span>
+                      ✓ Correct: {q.options[q.correctIndex]}
+                    </p>
+                    {q.explanation && (
+                      <div className="ml-7 mt-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-2.5 py-2">
+                        <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 mb-0.5">
+                          💡 Explanation
+                        </p>
+                        <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
+                          {q.explanation}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1413,6 +1429,10 @@ export default function COnlineTestPage({
               <div className="text-[10px] text-muted-foreground hidden sm:block">
                 Q{currentIndex + 1} of {totalQuestions}
               </div>
+            </div>
+            {/* Test mode badge */}
+            <div className="hidden md:flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 shrink-0 ml-2">
+              🔒 Test Mode — No hints
             </div>
           </div>
 

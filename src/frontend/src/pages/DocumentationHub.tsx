@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import StudyAgent from "../components/StudyAgent";
 import {
   type CodeExample,
   DOC_TOPICS,
@@ -4095,6 +4096,12 @@ export default function DocumentationHub({
           </>
         )}
       </div>
+
+      {/* Study Agent — visible while reading a documentation article */}
+      <StudyAgent
+        activeTab="modules"
+        currentTopic={selectedTopic ? selectedTopic.title : "Documentation"}
+      />
     </div>
   );
 }

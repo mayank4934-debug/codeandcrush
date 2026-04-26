@@ -15,6 +15,7 @@ export interface StoreItem {
   cost: number;
   description: string;
   unlockXp?: number;
+  unlockCondition?: string;
   season?: StoreSeason;
 }
 
@@ -1044,7 +1045,7 @@ const PETS: StoreItem[] = [
   },
 ];
 
-// ── Special (7 items) ────────────────────────────────────────────────────────
+// ── Special (20 items, including AR/VR) ────────────────────────────────────────
 const SPECIAL: StoreItem[] = [
   {
     id: "special-golden-aura",
@@ -1108,6 +1109,131 @@ const SPECIAL: StoreItem[] = [
     cost: 60,
     description: "Green matrix rain aura",
     unlockXp: 600,
+  },
+  // ── AR/VR Domain Collection ─────────────────────────────────────────────────
+  {
+    id: "special-vr-headset",
+    category: "special",
+    label: "VR Headset",
+    emoji: "🥽",
+    cost: 150,
+    description: "Meta Quest-style VR headset — unlocked by AR/VR domain",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "special-ar-glasses",
+    category: "special",
+    label: "AR Glasses",
+    emoji: "🔮",
+    cost: 150,
+    description: "HoloLens-style AR smart glasses — unlocked by AR/VR domain",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "special-vr-suit",
+    category: "special",
+    label: "VR Suit",
+    emoji: "🦾",
+    cost: 200,
+    description: "Sleek VR haptic suit with glowing neon accents",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "special-futuristic-outfit",
+    category: "special",
+    label: "Futuristic Outfit",
+    emoji: "🤖",
+    cost: 180,
+    description: "Cyberpunk-style outfit with neon trim",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "special-holographic-hair",
+    category: "special",
+    label: "Holographic Hair",
+    emoji: "💜",
+    cost: 120,
+    description: "Glowing holographic blue/purple hair — AR/VR collection",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "bg-virtual-world",
+    category: "special",
+    label: "Virtual World",
+    emoji: "🌐",
+    cost: 150,
+    description: "Grid floor with floating holographic panels",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "bg-space-station",
+    category: "special",
+    label: "Space Station",
+    emoji: "🛸",
+    cost: 130,
+    description: "Zero-gravity space station interior",
+    unlockCondition: "complete-arvr-domain",
+    season: "all",
+  },
+  {
+    id: "special-neural-link",
+    category: "special",
+    label: "Neural Link",
+    emoji: "🧠",
+    cost: 160,
+    description: "Brain-computer interface glow effect",
+    unlockXp: 1500,
+  },
+  {
+    id: "special-digital-twin",
+    category: "special",
+    label: "Digital Twin",
+    emoji: "👾",
+    cost: 140,
+    description: "Your pixelated digital avatar clone",
+    unlockXp: 1400,
+  },
+  {
+    id: "special-quantum-aura",
+    category: "special",
+    label: "Quantum Aura",
+    emoji: "🔬",
+    cost: 175,
+    description: "Superposition particle field effect",
+    unlockXp: 1600,
+  },
+  {
+    id: "special-neon-wings",
+    category: "special",
+    label: "Neon Angel Wings",
+    emoji: "🦋",
+    cost: 110,
+    description: "Glowing neon butterfly wings",
+    unlockXp: 1100,
+  },
+  {
+    id: "special-time-warp",
+    category: "special",
+    label: "Time Warp",
+    emoji: "⏳",
+    cost: 130,
+    description: "Temporal distortion field effect",
+    unlockXp: 1300,
+  },
+  {
+    id: "special-matrix",
+    category: "special",
+    label: "Matrix Code",
+    emoji: "🟩",
+    cost: 95,
+    description: "Cascading green code rain",
+    unlockXp: 950,
   },
 ];
 
