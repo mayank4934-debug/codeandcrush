@@ -17,13 +17,13 @@ type EventCategory =
   | "Contest"
   | "Conference"
   | "Workshop";
-type EventStatus = "All" | "Upcoming" | "Ongoing" | "Past";
 
 interface Event {
   id: number;
   name: string;
   organizer: string;
   dateRange: string;
+  startDate: Date; // for sorting / "happening soon" detection
   location: string;
   category: Exclude<EventCategory, "All">;
   description: string;
@@ -31,351 +31,389 @@ interface Event {
   participants?: number;
   difficulty: "Beginner" | "Intermediate" | "Advanced" | "All Levels";
   hot: boolean;
-  status: "Upcoming" | "Ongoing" | "Past";
+  status: "Upcoming" | "Registration Open" | "Happening Soon";
   tags: string[];
   registerUrl: string;
 }
 
+// All events: May 2026 and later only
 const EVENTS: Event[] = [
   {
     id: 1,
-    name: "Google Summer of Code 2025",
-    organizer: "Google",
-    dateRange: "May – Aug 2025",
-    location: "Remote (Global)",
-    category: "Contest",
+    name: "PyCon US 2026",
+    organizer: "Python Software Foundation",
+    dateRange: "May 15–23, 2026",
+    startDate: new Date("2026-05-15"),
+    location: "Pittsburgh, USA",
+    category: "Conference",
     description:
-      "Google's flagship open source program where students contribute to real-world open source projects under the mentorship of experienced developers. Selected participants receive a stipend of $3,000–$6,600 based on project size. Ideal for students wanting to build their open source portfolio and network with Google engineers.",
-    prize: "Stipend $3,000–$6,600",
-    participants: 15000,
-    difficulty: "Intermediate",
+      "The world's biggest Python community gathering — hundreds of talks, open space sessions, and sprints covering Python internals, data science, web development, and AI. An unmissable event for Pythonistas at every level.",
+    prize: "Free (virtual) / Paid (in-person)",
+    participants: 4000,
+    difficulty: "All Levels",
     hot: true,
-    status: "Ongoing",
-    tags: ["Google", "Open Source", "Mentorship", "Remote"],
-    registerUrl: "https://summerofcode.withgoogle.com",
+    status: "Registration Open",
+    tags: ["Python", "Community", "USA", "Open Source"],
+    registerUrl: "https://us.pycon.org/2026",
   },
   {
     id: 2,
-    name: "Meta Hacker Cup 2025",
-    organizer: "Meta",
-    dateRange: "Jun – Oct 2025",
-    location: "Remote (Global)",
-    category: "Contest",
+    name: "VueConf 2026",
+    organizer: "Vue.js Core Team",
+    dateRange: "May 20–22, 2026",
+    startDate: new Date("2026-05-20"),
+    location: "Amsterdam, Netherlands",
+    category: "Conference",
     description:
-      "Meta's prestigious annual international programming competition featuring multiple elimination rounds from qualification to the onsite finals. Solve complex algorithmic problems competing against thousands of top coders worldwide. Top performers win cash prizes, exclusive Meta merchandise, and direct recognition from Meta engineers.",
-    prize: "$20,000 prize pool",
-    participants: 25000,
-    difficulty: "Advanced",
-    hot: true,
-    status: "Upcoming",
-    tags: ["Meta", "Algorithms", "Elimination Rounds", "DS"],
-    registerUrl: "https://www.facebook.com/hackercup",
+      "The official Vue.js conference featuring deep-dives into Vue 4, Vite, Nuxt, and the wider Composition API ecosystem. Keynotes from core contributors plus community workshops and networking.",
+    prize: "Paid registration",
+    participants: 1500,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Registration Open",
+    tags: ["Vue", "JavaScript", "Frontend", "Nuxt"],
+    registerUrl: "https://vueconf.us",
   },
   {
     id: 3,
-    name: "ICPC World Finals 2025",
-    organizer: "ICPC Foundation",
-    dateRange: "Oct 2025",
-    location: "Luxor, Egypt",
-    category: "Contest",
+    name: "Microsoft Build 2026",
+    organizer: "Microsoft",
+    dateRange: "May 19–21, 2026",
+    startDate: new Date("2026-05-19"),
+    location: "Seattle, USA + Virtual",
+    category: "Conference",
     description:
-      "The International Collegiate Programming Contest World Finals — the pinnacle of university-level competitive programming. Teams of three solve complex algorithmic problems under a 5-hour time limit. Top regional finalists from around the world compete for medals, cash prizes, and the most coveted title in competitive programming.",
-    prize: "$15,000 + medals",
-    participants: 50000,
-    difficulty: "Advanced",
+      "Microsoft's flagship developer conference showcasing the latest in Azure, AI Copilot, .NET, Windows, and open-source tooling. Hands-on labs, live keynotes, and thousands of breakout sessions for developers worldwide.",
+    prize: "Free (virtual) / Paid (in-person)",
+    participants: 80000,
+    difficulty: "All Levels",
     hot: true,
-    status: "Upcoming",
-    tags: ["ICPC", "Algorithms", "University", "World Finals"],
-    registerUrl: "https://icpc.global",
+    status: "Registration Open",
+    tags: ["Microsoft", "Azure", "AI", ".NET", "Copilot"],
+    registerUrl: "https://build.microsoft.com",
   },
   {
     id: 4,
-    name: "ACM SIGKDD Data Mining Cup 2025",
-    organizer: "ACM SIGKDD",
-    dateRange: "Aug 2025",
-    location: "Remote (Global)",
-    category: "Contest",
+    name: "React Summit 2026",
+    organizer: "GitNation",
+    dateRange: "Jun 12–16, 2026",
+    startDate: new Date("2026-06-12"),
+    location: "Amsterdam + Remote",
+    category: "Conference",
     description:
-      "One of the most prestigious data science competitions in academia, organized alongside the KDD Conference. Teams tackle real-world data mining and machine learning challenges submitted by industry sponsors. Winners receive cash prizes and publication recognition in the KDD proceedings.",
-    prize: "$10,000 prize pool",
-    participants: 5000,
-    difficulty: "Advanced",
-    hot: false,
-    status: "Upcoming",
-    tags: ["Data Science", "ML", "ACM", "Mining"],
-    registerUrl: "https://www.kdd.org/kdd2025",
+      "The world's largest React conference, bringing together 10,000+ developers from 100+ countries to explore React 20, Server Components, Next.js, React Native, and the future of frontend architecture.",
+    prize: "Paid registration",
+    participants: 10000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Registration Open",
+    tags: ["React", "JavaScript", "Next.js", "Frontend"],
+    registerUrl: "https://reactsummit.com",
   },
   {
     id: 5,
-    name: "GitHub Universe 2025",
-    organizer: "GitHub",
-    dateRange: "Oct 2025",
-    location: "San Francisco, USA",
+    name: "Apple WWDC 2026",
+    organizer: "Apple",
+    dateRange: "Jun 8–12, 2026",
+    startDate: new Date("2026-06-08"),
+    location: "Cupertino, USA + Online",
     category: "Conference",
     description:
-      "GitHub's flagship annual developer conference bringing together tens of thousands of developers, maintainers, and open source enthusiasts. Sessions cover AI-powered development, GitHub Copilot advances, DevSecOps, and the future of software collaboration. Free virtual attendance option available globally.",
-    prize: "Free (Virtual) / Paid (In-person)",
-    participants: 40000,
-    difficulty: "All Levels",
-    hot: false,
-    status: "Upcoming",
-    tags: ["GitHub", "Copilot", "AI", "DevOps"],
-    registerUrl: "https://githubuniverse.com",
+      "Apple's Worldwide Developers Conference reveals the future of iOS, macOS, visionOS, Swift, and Xcode. Hundreds of sessions, labs with Apple engineers, and hands-on opportunities for app developers.",
+    prize: "Free online / Limited in-person tickets",
+    participants: 50000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Registration Open",
+    tags: ["Apple", "iOS", "Swift", "macOS", "visionOS"],
+    registerUrl: "https://developer.apple.com/wwdc26",
   },
   {
     id: 6,
-    name: "Google I/O Extended 2025",
+    name: "Google I/O Extended 2026",
     organizer: "Google Developer Groups",
-    dateRange: "Jun – Aug 2025",
+    dateRange: "Jun–Aug 2026",
+    startDate: new Date("2026-06-01"),
     location: "Worldwide (100+ cities)",
     category: "Conference",
     description:
-      "Community-run extensions of the main Google I/O event, organized by Google Developer Groups across 100+ cities worldwide. Covers Google's latest announcements in AI (Gemini), Android, Flutter, Web, and Cloud. A great opportunity to network locally and watch live I/O sessions with fellow developers.",
+      "Community-run extensions of Google I/O, organized by GDGs in 100+ cities. Covers the latest in Gemini AI, Android, Flutter, Web, and Firebase — great for networking with local developers.",
     prize: "Free entry",
-    participants: 200000,
+    participants: 250000,
     difficulty: "All Levels",
     hot: true,
     status: "Upcoming",
     tags: ["Google", "AI", "Android", "Flutter", "GDG"],
-    registerUrl: "https://io.google/2025/program/",
+    registerUrl: "https://gdg.community.dev",
   },
   {
     id: 7,
-    name: "Smart India Hackathon 2025",
+    name: "ICML 2026",
+    organizer: "IMLS / International ML Society",
+    dateRange: "Jul 13–19, 2026",
+    startDate: new Date("2026-07-13"),
+    location: "Vienna, Austria",
+    category: "Conference",
+    description:
+      "International Conference on Machine Learning — the top-tier academic venue for ML research. Thousands of papers on deep learning, reinforcement learning, generative AI, fairness, and robustness. Workshops, tutorials, and poster sessions.",
+    prize: "Paid registration",
+    participants: 14000,
+    difficulty: "Advanced",
+    hot: true,
+    status: "Registration Open",
+    tags: ["ML", "Deep Learning", "AI", "Research", "Academia"],
+    registerUrl: "https://icml.cc/2026",
+  },
+  {
+    id: 8,
+    name: "DEF CON 34",
+    organizer: "DEF CON Communications",
+    dateRange: "Aug 6–9, 2026",
+    startDate: new Date("2026-08-06"),
+    location: "Las Vegas, USA",
+    category: "Conference",
+    description:
+      "One of the world's largest hacker conventions — villages, CTF competitions, talks on offensive/defensive security, AI hacking, hardware, and social engineering. A must-attend for cybersecurity professionals and enthusiasts.",
+    prize: "Paid entry",
+    participants: 35000,
+    difficulty: "Advanced",
+    hot: true,
+    status: "Upcoming",
+    tags: ["Security", "Hacking", "CTF", "Cybersecurity", "USA"],
+    registerUrl: "https://defcon.org",
+  },
+  {
+    id: 9,
+    name: "BlackHat USA 2026",
+    organizer: "BlackHat",
+    dateRange: "Aug 1–6, 2026",
+    startDate: new Date("2026-08-01"),
+    location: "Las Vegas, USA",
+    category: "Conference",
+    description:
+      "The premier cybersecurity conference for enterprise professionals — briefings on cutting-edge vulnerabilities, AI-driven attacks, zero-days, cloud security, and hands-on training courses from world-class security researchers.",
+    prize: "Paid registration",
+    participants: 20000,
+    difficulty: "Advanced",
+    hot: false,
+    status: "Registration Open",
+    tags: ["Security", "Enterprise", "Vulnerabilities", "AI", "Training"],
+    registerUrl: "https://blackhat.com/us-26",
+  },
+  {
+    id: 10,
+    name: "MLconf 2026",
+    organizer: "MLconf Organizing Team",
+    dateRange: "Sep 10–11, 2026",
+    startDate: new Date("2026-09-10"),
+    location: "San Francisco, USA",
+    category: "Conference",
+    description:
+      "A practitioner-focused ML conference connecting data scientists, ML engineers, and researchers. Sessions cover production ML systems, LLM fine-tuning, computer vision, and responsible AI.",
+    prize: "Paid registration",
+    participants: 2000,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Upcoming",
+    tags: ["ML", "Data Science", "LLM", "Production AI"],
+    registerUrl: "https://mlconf.com",
+  },
+  {
+    id: 11,
+    name: "International JavaScript Conference 2026",
+    organizer: "S&S Media Group",
+    dateRange: "Sep 7–11, 2026",
+    startDate: new Date("2026-09-07"),
+    location: "Munich, Germany + Online",
+    category: "Conference",
+    description:
+      "Europe's leading JavaScript conference — deep dives into TypeScript, Node.js, React, Vue, Angular, WebAssembly, and web performance. Workshops, talks, and networking across 4 days.",
+    prize: "Paid registration",
+    participants: 3000,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Registration Open",
+    tags: ["JavaScript", "TypeScript", "Node.js", "React", "Vue"],
+    registerUrl: "https://javascript-conference.com",
+  },
+  {
+    id: 12,
+    name: "Angular Connect 2026",
+    organizer: "Angular Core Team & GDE Network",
+    dateRange: "Sep 24–25, 2026",
+    startDate: new Date("2026-09-24"),
+    location: "London, UK",
+    category: "Conference",
+    description:
+      "The flagship Angular conference — sessions from core team members on Signals, new rendering models, Angular Universal, and enterprise-scale architecture. Attendees get early access to upcoming Angular features.",
+    prize: "Paid registration",
+    participants: 1200,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Upcoming",
+    tags: ["Angular", "TypeScript", "Frontend", "Enterprise"],
+    registerUrl: "https://angularconnect.com",
+  },
+  {
+    id: 13,
+    name: "RustConf 2026",
+    organizer: "Rust Foundation",
+    dateRange: "Sep 18–19, 2026",
+    startDate: new Date("2026-09-18"),
+    location: "Portland, USA",
+    category: "Conference",
+    description:
+      "The official Rust programming language conference — talks on async Rust, embedded systems, WebAssembly, game dev in Rust, and the evolving Cargo ecosystem. Community-driven and beginner-welcoming.",
+    prize: "Paid registration",
+    participants: 1500,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Upcoming",
+    tags: ["Rust", "Systems", "WebAssembly", "Open Source"],
+    registerUrl: "https://rustconf.com",
+  },
+  {
+    id: 14,
+    name: "GitHub Universe 2026",
+    organizer: "GitHub",
+    dateRange: "Oct 14–15, 2026",
+    startDate: new Date("2026-10-14"),
+    location: "San Francisco, USA",
+    category: "Conference",
+    description:
+      "GitHub's flagship annual developer conference covering AI-powered development with Copilot, DevSecOps, open source sustainability, and the future of software collaboration. Free virtual access available globally.",
+    prize: "Free (virtual) / Paid (in-person)",
+    participants: 45000,
+    difficulty: "All Levels",
+    hot: true,
+    status: "Upcoming",
+    tags: ["GitHub", "Copilot", "AI", "DevOps", "Open Source"],
+    registerUrl: "https://githubuniverse.com",
+  },
+  {
+    id: 15,
+    name: "NodeConf 2026",
+    organizer: "OpenJS Foundation",
+    dateRange: "Oct 22–23, 2026",
+    startDate: new Date("2026-10-22"),
+    location: "Dublin, Ireland",
+    category: "Conference",
+    description:
+      "The leading conference for the Node.js community — talks on performance, security, async patterns, Deno/Bun comparisons, edge computing with Node, and the latest in npm ecosystem tooling.",
+    prize: "Paid registration",
+    participants: 1000,
+    difficulty: "Intermediate",
+    hot: false,
+    status: "Upcoming",
+    tags: ["Node.js", "JavaScript", "Backend", "npm", "Edge"],
+    registerUrl: "https://nodeconf.eu",
+  },
+  {
+    id: 16,
+    name: "Meta Connect 2026",
+    organizer: "Meta",
+    dateRange: "Oct 8–9, 2026",
+    startDate: new Date("2026-10-08"),
+    location: "Menlo Park, USA + Online",
+    category: "Conference",
+    description:
+      "Meta's annual AR/VR developer event showcasing the future of the metaverse — new Quest hardware, Horizon OS updates, spatial computing developer tools, and AI integration into immersive experiences.",
+    prize: "Free (online) / Invite (in-person)",
+    participants: 30000,
+    difficulty: "All Levels",
+    hot: true,
+    status: "Upcoming",
+    tags: ["Meta", "AR/VR", "Metaverse", "Quest", "AI"],
+    registerUrl: "https://metaconnect.com",
+  },
+  {
+    id: 17,
+    name: "KubeCon + CloudNativeCon 2026",
+    organizer: "CNCF",
+    dateRange: "Nov 10–13, 2026",
+    startDate: new Date("2026-11-10"),
+    location: "Chicago, USA",
+    category: "Conference",
+    description:
+      "The Cloud Native Computing Foundation's flagship event — sessions on Kubernetes, service mesh, observability, GitOps, eBPF, WebAssembly, and platform engineering. The largest cloud-native gathering in the world.",
+    prize: "Paid registration",
+    participants: 12000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Upcoming",
+    tags: ["Kubernetes", "Cloud Native", "DevOps", "CNCF", "Docker"],
+    registerUrl:
+      "https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america",
+  },
+  {
+    id: 18,
+    name: "OpenAI DevDay 2026",
+    organizer: "OpenAI",
+    dateRange: "Nov 5, 2026",
+    startDate: new Date("2026-11-05"),
+    location: "San Francisco, USA",
+    category: "Conference",
+    description:
+      "OpenAI's annual developer conference unveiling new model capabilities, API features, fine-tuning advances, and the roadmap for GPT-5 and beyond. A key event for AI application developers and researchers.",
+    prize: "Free (selected registrants)",
+    participants: 5000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Upcoming",
+    tags: ["OpenAI", "GPT", "AI", "LLM", "Developer API"],
+    registerUrl: "https://openai.com/devday",
+  },
+  {
+    id: 19,
+    name: "AWS re:Invent 2026",
+    organizer: "Amazon Web Services",
+    dateRange: "Dec 1–5, 2026",
+    startDate: new Date("2026-12-01"),
+    location: "Las Vegas, USA",
+    category: "Conference",
+    description:
+      "The world's largest cloud computing conference — 60,000+ attendees, 2,000+ sessions, hands-on labs, certification exams, and major AWS service launches. Essential for cloud architects, developers, and DevOps engineers.",
+    prize: "Paid registration",
+    participants: 60000,
+    difficulty: "Intermediate",
+    hot: true,
+    status: "Upcoming",
+    tags: ["AWS", "Cloud", "Serverless", "DevOps", "AI"],
+    registerUrl: "https://reinvent.awsevents.com",
+  },
+  {
+    id: 20,
+    name: "Smart India Hackathon 2026",
     organizer: "Government of India / AICTE",
-    dateRange: "Aug – Sep 2025",
+    dateRange: "Aug–Sep 2026",
+    startDate: new Date("2026-08-01"),
     location: "Pan India (Offline)",
     category: "Hackathon",
     description:
-      "India's largest national hackathon where students solve real-world problem statements from government ministries and PSUs. Categories span healthcare, agriculture, smart cities, fintech, and education. Winners receive ₹1 Lakh per team, plus guaranteed internship opportunities with leading public sector organizations.",
+      "India's largest national hackathon where students solve real-world problem statements from government ministries. Categories span healthcare, agriculture, smart cities, and education. Winners receive ₹1 Lakh + internship opportunities.",
     prize: "₹1 Lakh per team + internships",
-    participants: 500000,
+    participants: 600000,
     difficulty: "All Levels",
     hot: true,
     status: "Upcoming",
     tags: ["India", "Government", "AI", "Social Good"],
     registerUrl: "https://www.sih.gov.in",
   },
-  {
-    id: 8,
-    name: "HackerEarth FutureCode 2025",
-    organizer: "HackerEarth",
-    dateRange: "Jul 2025",
-    location: "Remote (Global)",
-    category: "Contest",
-    description:
-      "HackerEarth's annual flagship algorithm coding competition open to developers of all experience levels. Multiple rounds test data structures, dynamic programming, graphs, and number theory. Top rankers win cash prizes and get noticed by recruiters from 1000+ companies using HackerEarth for hiring.",
-    prize: "$5,000 prize pool",
-    participants: 50000,
-    difficulty: "Intermediate",
-    hot: false,
-    status: "Upcoming",
-    tags: ["HackerEarth", "Algorithms", "Hiring", "Global"],
-    registerUrl: "https://www.hackerearth.com/challenges",
-  },
-  {
-    id: 9,
-    name: "Codeforces Round Series 2025",
-    organizer: "Codeforces",
-    dateRange: "Monthly May – Dec 2025",
-    location: "Remote (Global)",
-    category: "Contest",
-    description:
-      "Monthly rated competitive programming rounds on one of the world's top competitive programming platforms. Each round features 5–7 algorithmic problems with increasing difficulty. Contributes to your global Codeforces rating used by FAANG recruiters. Educational rounds include editorial explanations for every problem.",
-    prize: "Free / Rating-based",
-    difficulty: "All Levels",
-    hot: false,
-    status: "Ongoing",
-    tags: ["Codeforces", "Competitive", "Rated", "Monthly"],
-    registerUrl: "https://codeforces.com/contests",
-  },
-  {
-    id: 10,
-    name: "LeetCode Weekly Contest 2025",
-    organizer: "LeetCode",
-    dateRange: "Every Sunday, year-round",
-    location: "Remote (Global)",
-    category: "Contest",
-    description:
-      "Weekly timed contests with 4 problems across Easy, Medium, and Hard difficulty — the gold standard for FAANG interview prep. Compete globally every Sunday and build the speed and accuracy needed for technical interviews. Biweekly contests also available on alternate Saturdays.",
-    prize: "Free / Global ranking",
-    difficulty: "All Levels",
-    hot: false,
-    status: "Ongoing",
-    tags: ["LeetCode", "FAANG Prep", "Weekly", "Interview"],
-    registerUrl: "https://leetcode.com/contest",
-  },
-  {
-    id: 11,
-    name: "Devfolio Build with AI Hackathon 2025",
-    organizer: "Devfolio",
-    dateRange: "Jun 2025",
-    location: "Remote (Global)",
-    category: "Hackathon",
-    description:
-      "A premier online hackathon focused exclusively on AI/ML applications — from LLM-powered tools to computer vision and generative AI projects. Organized by Devfolio, India's largest hackathon platform. Open globally with dedicated tracks for student teams. Winning projects receive mentorship and startup network access.",
-    prize: "$10,000 prize pool",
-    participants: 10000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Upcoming",
-    tags: ["AI", "ML", "LLM", "Devfolio", "India"],
-    registerUrl: "https://devfolio.co",
-  },
-  {
-    id: 12,
-    name: "Microsoft Imagine Cup 2025",
-    organizer: "Microsoft",
-    dateRange: "Mar – May 2025",
-    location: "Remote / Seattle, USA",
-    category: "Hackathon",
-    description:
-      "Microsoft's flagship global student competition for technology-driven innovation. Teams build solutions using AI, cloud, mixed reality, and gaming to address the world's biggest challenges. The grand prize is $100,000, Azure cloud credits, and a mentoring session with Microsoft CEO Satya Nadella.",
-    prize: "$100,000 Grand Prize",
-    participants: 30000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Past",
-    tags: ["Microsoft", "Innovation", "Azure", "AI", "Student"],
-    registerUrl: "https://imaginecup.microsoft.com",
-  },
-  {
-    id: 13,
-    name: "AWS re:Invent 2025",
-    organizer: "Amazon Web Services",
-    dateRange: "Dec 2025",
-    location: "Las Vegas, USA",
-    category: "Conference",
-    description:
-      "The world's largest cloud computing conference hosted by AWS, bringing together 60,000+ developers, architects, and IT professionals. Features 2,000+ sessions, hands-on labs, certification exams, and announcements of major new AWS services. A must-attend event for cloud practitioners worldwide.",
-    prize: "Paid registration",
-    participants: 60000,
-    difficulty: "Intermediate",
-    hot: false,
-    status: "Upcoming",
-    tags: ["AWS", "Cloud", "Serverless", "DevOps", "AI"],
-    registerUrl: "https://reinvent.awsevents.com",
-  },
-  {
-    id: 14,
-    name: "GitHub Copilot Hackathon 2025",
-    organizer: "GitHub",
-    dateRange: "Jul 2025",
-    location: "Remote (Global)",
-    category: "Hackathon",
-    description:
-      "GitHub's dedicated hackathon challenging developers to build innovative applications using GitHub Copilot AI coding assistant. Explore AI pair programming, code generation, and automation. Projects judged on creativity, technical depth, and practical impact. Great for exploring cutting-edge AI development tools.",
-    prize: "$5,000 prize pool",
-    participants: 5000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Upcoming",
-    tags: ["GitHub", "Copilot", "AI Coding", "Automation"],
-    registerUrl: "https://github.com/hackathons",
-  },
-  {
-    id: 15,
-    name: "CodeChef SnackDown 2025",
-    organizer: "CodeChef",
-    dateRange: "Sep – Nov 2025",
-    location: "Remote (Global)",
-    category: "Contest",
-    description:
-      "CodeChef's annual global team programming contest with two-person teams competing across multiple online rounds culminating in an onsite final. Problems span algorithms, data structures, mathematics, and combinatorics. One of the most popular team competitive programming events with a strong Indian developer community.",
-    prize: "$10,000 prize pool",
-    participants: 100000,
-    difficulty: "Intermediate",
-    hot: false,
-    status: "Upcoming",
-    tags: ["CodeChef", "Team Contest", "Competitive", "India"],
-    registerUrl: "https://www.codechef.com/snackdown",
-  },
-  {
-    id: 16,
-    name: "Kaggle Competitions 2025",
-    organizer: "Kaggle / Google",
-    dateRange: "Ongoing 2025",
-    location: "Remote (Global)",
-    category: "Contest",
-    description:
-      "Kaggle hosts the world's leading data science and machine learning competitions, with new challenges launching monthly. Compete on real-world datasets across NLP, computer vision, tabular data, and time series. Prize pools regularly exceed $25,000, and top finishers earn Kaggle Grandmaster ranking.",
-    prize: "$25,000+ per competition",
-    participants: 300000,
-    difficulty: "Intermediate",
-    hot: false,
-    status: "Ongoing",
-    tags: ["Kaggle", "Data Science", "ML", "NLP", "CV"],
-    registerUrl: "https://www.kaggle.com/competitions",
-  },
-  {
-    id: 17,
-    name: "MLH Global Hack Week 2025",
-    organizer: "Major League Hacking",
-    dateRange: "Monthly 2025",
-    location: "Remote (Global)",
-    category: "Hackathon",
-    description:
-      "MLH's monthly themed virtual hack weeks designed for students new to hackathons and open source. Each week focuses on a specific technology like Web3, AI, or open source tools. Low-pressure format with workshops, office hours, and beginner-friendly challenges — perfect for building your first projects.",
-    prize: "Free / MLH swag",
-    participants: 50000,
-    difficulty: "Beginner",
-    hot: false,
-    status: "Ongoing",
-    tags: ["MLH", "Student", "Beginner", "Monthly"],
-    registerUrl: "https://ghw.mlh.io",
-  },
-  {
-    id: 18,
-    name: "HackMIT 2025",
-    organizer: "MIT Students",
-    dateRange: "Sep 2025",
-    location: "Cambridge, USA",
-    category: "Hackathon",
-    description:
-      "One of the most prestigious university hackathons in the United States, organized by MIT students and attended by 1000+ hackers from top universities globally. 24-hour build sprint with workshops from leading tech companies and $10,000+ in prizes across multiple tracks including hardware, AI, and social good.",
-    prize: "$10,000+ prize pool",
-    participants: 1000,
-    difficulty: "Advanced",
-    hot: true,
-    status: "Upcoming",
-    tags: ["MIT", "University", "USA", "AI", "Hardware"],
-    registerUrl: "https://hackmit.org",
-  },
-  {
-    id: 19,
-    name: "PyCon US 2025",
-    organizer: "Python Software Foundation",
-    dateRange: "May 2025",
-    location: "Pittsburgh, USA",
-    category: "Conference",
-    description:
-      "The flagship annual conference for the Python programming language community. Features hundreds of talks, tutorials, and open space sessions covering Python internals, data science, web development, and community building. Also includes sprints for contributing to CPython and major Python packages.",
-    prize: "Paid registration",
-    participants: 3000,
-    difficulty: "All Levels",
-    hot: false,
-    status: "Past",
-    tags: ["Python", "Community", "USA", "Open Source"],
-    registerUrl: "https://us.pycon.org/2025",
-  },
-  {
-    id: 20,
-    name: "AI for Good Hackathon 2025",
-    organizer: "UN ITU / AI for Good",
-    dateRange: "Jun 2025",
-    location: "Remote (Global)",
-    category: "Hackathon",
-    description:
-      "The United Nations ITU's prestigious AI hackathon challenging developers to use artificial intelligence for solving global challenges like climate change, healthcare access, education equity, and food security. Projects are mentored by UN AI experts and winning teams get the opportunity to present at the ITU AI for Good Global Summit.",
-    prize: "$15,000 prize pool",
-    participants: 8000,
-    difficulty: "Intermediate",
-    hot: true,
-    status: "Upcoming",
-    tags: ["AI", "UN", "Social Impact", "Climate", "Healthcare"],
-    registerUrl: "https://aiforgood.itu.int",
-  },
 ];
+
+// Sort events by date ascending
+const SORTED_EVENTS = [...EVENTS].sort(
+  (a, b) => a.startDate.getTime() - b.startDate.getTime(),
+);
+
+const TODAY = new Date();
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+function getDisplayStatus(event: Event): string {
+  const diff = event.startDate.getTime() - TODAY.getTime();
+  if (diff > 0 && diff <= THIRTY_DAYS) return "Happening Soon";
+  return event.status;
+}
 
 const CATEGORY_STYLES: Record<string, string> = {
   Hackathon: "bg-purple-500/20 text-purple-300 border-purple-500/30",
@@ -393,15 +431,14 @@ const DIFFICULTY_STYLES: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   Upcoming: "bg-blue-500/15 text-blue-300",
-  Ongoing: "bg-emerald-500/15 text-emerald-400",
-  Past: "bg-muted text-muted-foreground",
+  "Registration Open": "bg-emerald-500/15 text-emerald-400",
+  "Happening Soon": "bg-orange-500/15 text-orange-400",
 };
 
 const PAGE_SIZE = 8;
 
 export default function EventsPage() {
   const [activeCategory, setActiveCategory] = useState<EventCategory>("All");
-  const [activeStatus, setActiveStatus] = useState<EventStatus>("All");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
@@ -412,24 +449,16 @@ export default function EventsPage() {
     "Conference",
     "Workshop",
   ];
-  const statuses: EventStatus[] = ["All", "Upcoming", "Ongoing", "Past"];
 
-  const filtered = EVENTS.filter((e) => {
-    const catMatch = activeCategory === "All" || e.category === activeCategory;
-    const statusMatch = activeStatus === "All" || e.status === activeStatus;
-    return catMatch && statusMatch;
-  });
+  const filtered = SORTED_EVENTS.filter(
+    (e) => activeCategory === "All" || e.category === activeCategory,
+  );
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
   const handleCategoryChange = (cat: EventCategory) => {
     setActiveCategory(cat);
-    setVisibleCount(PAGE_SIZE);
-  };
-
-  const handleStatusChange = (status: EventStatus) => {
-    setActiveStatus(status);
     setVisibleCount(PAGE_SIZE);
   };
 
@@ -442,14 +471,14 @@ export default function EventsPage() {
             🎤 Events &amp; Opportunities
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            2025–2026 hackathons, contests &amp; conferences · {EVENTS.length}{" "}
-            events
+            May 2026 onwards · {SORTED_EVENTS.length} upcoming events · sorted
+            by date
           </p>
         </div>
 
         {/* Category Filters */}
         <div
-          className="px-3 sm:px-4 pb-2 flex gap-2 overflow-x-auto"
+          className="px-3 sm:px-4 pb-3 flex gap-2 overflow-x-auto"
           style={{ scrollbarWidth: "none" }}
         >
           {categories.map((cat) => (
@@ -469,162 +498,144 @@ export default function EventsPage() {
           ))}
         </div>
 
-        {/* Status Filters */}
-        <div
-          className="px-3 sm:px-4 pb-3 flex gap-2 overflow-x-auto"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {statuses.map((status) => (
-            <button
-              type="button"
-              key={status}
-              data-ocid={`events.status_${status.toLowerCase()}.tab`}
-              onClick={() => handleStatusChange(status)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all border shrink-0 min-h-[30px] ${
-                activeStatus === status
-                  ? "bg-accent text-accent-foreground border-primary/50"
-                  : "bg-transparent text-muted-foreground border-border hover:border-border/80"
-              }`}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
-
         {/* Events List */}
         <div className="px-3 sm:px-4 pb-28 space-y-3">
           <AnimatePresence mode="popLayout">
-            {visible.map((event, i) => (
-              <motion.div
-                key={event.id}
-                layout
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.25, delay: i * 0.04 }}
-                data-ocid={`events.item.${i + 1}`}
-                className="bg-card border border-border rounded-2xl p-3 sm:p-4 relative overflow-hidden"
-              >
-                {event.hot && (
-                  <div className="absolute top-3 right-3">
-                    <span className="text-xs bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full font-semibold">
-                      🔥 Hot
-                    </span>
-                  </div>
-                )}
-
-                {/* Title + badges */}
-                <div className="flex items-start gap-2 mb-2">
-                  <div
-                    className={`flex-1 min-w-0 ${event.hot ? "pr-14" : "pr-0"}`}
-                  >
-                    <h3 className="font-bold text-foreground text-sm leading-tight mb-1.5">
-                      {event.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CATEGORY_STYLES[event.category] ?? "bg-muted text-muted-foreground border-border"}`}
-                      >
-                        {event.category}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_STYLES[event.difficulty]}`}
-                      >
-                        {event.difficulty}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[event.status]}`}
-                      >
-                        {event.status}
+            {visible.map((event, i) => {
+              const displayStatus = getDisplayStatus(event);
+              return (
+                <motion.div
+                  key={event.id}
+                  layout
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.25, delay: i * 0.04 }}
+                  data-ocid={`events.item.${i + 1}`}
+                  className="bg-card border border-border rounded-2xl p-3 sm:p-4 relative overflow-hidden"
+                >
+                  {event.hot && (
+                    <div className="absolute top-3 right-3">
+                      <span className="text-xs bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full font-semibold">
+                        🔥 Hot
                       </span>
                     </div>
-                  </div>
-                </div>
+                  )}
 
-                {/* Organizer + date + location */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-2">
-                  <span className="font-medium text-foreground/70">
-                    {event.organizer}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 shrink-0" /> {event.dateRange}
-                  </span>
-                  <span className="flex items-center gap-1 min-w-0">
-                    <MapPin className="w-3 h-3 shrink-0" />
-                    <span
-                      className="truncate max-w-[140px] sm:max-w-[220px]"
-                      title={event.location}
+                  {/* Title + badges */}
+                  <div className="flex items-start gap-2 mb-2">
+                    <div
+                      className={`flex-1 min-w-0 ${event.hot ? "pr-14" : "pr-0"}`}
                     >
-                      {event.location}
+                      <h3 className="font-bold text-foreground text-sm leading-tight mb-1.5">
+                        {event.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CATEGORY_STYLES[event.category] ?? "bg-muted text-muted-foreground border-border"}`}
+                        >
+                          {event.category}
+                        </span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_STYLES[event.difficulty]}`}
+                        >
+                          {event.difficulty}
+                        </span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[displayStatus] ?? "bg-muted text-muted-foreground"}`}
+                        >
+                          {displayStatus}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Organizer + date + location */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-2">
+                    <span className="font-medium text-foreground/70">
+                      {event.organizer}
                     </span>
-                  </span>
-                  {event.participants && (
                     <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3 shrink-0" />
-                      {event.participants >= 1000
-                        ? `${Math.round(event.participants / 1000)}K+`
-                        : event.participants}{" "}
-                      participants
+                      <Calendar className="w-3 h-3 shrink-0" />
+                      {event.dateRange}
                     </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-muted-foreground leading-relaxed mb-2.5">
-                  {event.description}
-                </p>
-
-                {/* Tags */}
-                {event.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {event.tags.slice(0, 4).map((tag) => (
+                    <span className="flex items-center gap-1 min-w-0">
+                      <MapPin className="w-3 h-3 shrink-0" />
                       <span
-                        key={tag}
-                        className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        className="truncate max-w-[140px] sm:max-w-[220px]"
+                        title={event.location}
                       >
-                        #{tag}
+                        {event.location}
                       </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Prize + action buttons */}
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  {event.prize ? (
-                    <span className="text-xs font-medium text-primary flex items-center gap-1 min-w-0 flex-wrap">
-                      <Trophy className="w-3 h-3 shrink-0" />
-                      <span className="break-words">{event.prize}</span>
                     </span>
-                  ) : (
-                    <span />
-                  )}
-                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      data-ocid={`events.learn_more.button.${i + 1}`}
-                      className="h-7 text-xs rounded-full px-2.5 border-border hover:border-primary/40"
-                      onClick={() => setSelectedEvent(event)}
-                    >
-                      <Info className="w-3 h-3 mr-1" /> Details
-                    </Button>
-                    <Button
-                      size="sm"
-                      data-ocid={`events.register.button.${i + 1}`}
-                      className="h-7 text-xs rounded-full px-2.5 bg-primary text-primary-foreground hover:bg-primary/90"
-                      onClick={() =>
-                        window.open(
-                          event.registerUrl,
-                          "_blank",
-                          "noopener,noreferrer",
-                        )
-                      }
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" /> Register
-                    </Button>
+                    {event.participants && (
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3 shrink-0" />
+                        {event.participants >= 1000
+                          ? `${Math.round(event.participants / 1000)}K+`
+                          : event.participants}{" "}
+                        participants
+                      </span>
+                    )}
                   </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-2.5">
+                    {event.description}
+                  </p>
+
+                  {/* Tags */}
+                  {event.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {event.tags.slice(0, 4).map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Prize + action buttons */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    {event.prize ? (
+                      <span className="text-xs font-medium text-primary flex items-center gap-1 min-w-0 flex-wrap">
+                        <Trophy className="w-3 h-3 shrink-0" />
+                        <span className="break-words">{event.prize}</span>
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-ocid={`events.learn_more.button.${i + 1}`}
+                        className="h-7 text-xs rounded-full px-2.5 border-border hover:border-primary/40"
+                        onClick={() => setSelectedEvent(event)}
+                      >
+                        <Info className="w-3 h-3 mr-1" /> Details
+                      </Button>
+                      <Button
+                        size="sm"
+                        data-ocid={`events.register.button.${i + 1}`}
+                        className="h-7 text-xs rounded-full px-2.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() =>
+                          window.open(
+                            event.registerUrl,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" /> Register
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
 
           {/* Load More */}
@@ -690,9 +701,9 @@ export default function EventsPage() {
                       {selectedEvent.difficulty}
                     </Badge>
                     <Badge
-                      className={`text-xs ${STATUS_STYLES[selectedEvent.status]}`}
+                      className={`text-xs ${STATUS_STYLES[getDisplayStatus(selectedEvent)] ?? "bg-muted text-muted-foreground"}`}
                     >
-                      {selectedEvent.status}
+                      {getDisplayStatus(selectedEvent)}
                     </Badge>
                     {selectedEvent.hot && (
                       <Badge className="text-xs bg-red-500/20 text-red-300 border border-red-500/30">

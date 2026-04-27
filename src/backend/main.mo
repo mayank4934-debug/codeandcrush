@@ -73,40 +73,47 @@ actor {
 
     // Always use the real production domain. The Host header on ICP is
     // unreliable and must not be used to build canonical sitemap URLs.
-    let baseUrl : Text = "https://codeWithcrush.caffeine.xyz";
+    let baseUrl : Text = "https://codeandcrush.app";
 
-    if (path == "/sitemap.xml") {
-      let today = "2026-04-24";
+    if (path == "/sitemap.xml" or path == "/sitemap.xml/") {
       let xml : Text =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" #
-        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">" #
-        "<url><loc>" # baseUrl # "/</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>" #
-        "<url><loc>" # baseUrl # "/#study</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>" #
-        "<url><loc>" # baseUrl # "/#roadmap</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>" #
-        "<url><loc>" # baseUrl # "/#problems</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>" #
-        "<url><loc>" # baseUrl # "/#dashboard</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
-        "<url><loc>" # baseUrl # "/#events</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
-        "<url><loc>" # baseUrl # "/#documentation</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
-        "<url><loc>" # baseUrl # "/#compiler</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>" #
-        "<url><loc>" # baseUrl # "/#visualizer</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>" #
-        "<url><loc>" # baseUrl # "/#practice</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>" #
-        "<url><loc>" # baseUrl # "/#profile</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>" #
-        "<url><loc>" # baseUrl # "/#social</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>" #
-        "<url><loc>" # baseUrl # "/#leaderboard</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>" #
-        "<url><loc>" # baseUrl # "/#notes</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>" #
-        "<url><loc>" # baseUrl # "/#avatar</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>" #
-        "<url><loc>" # baseUrl # "/#messages</loc><lastmod>" # today # "</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>" #
-        "<url><loc>" # baseUrl # "/#online-test</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
-        "<url><loc>" # baseUrl # "/#quiz</loc><lastmod>" # today # "</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>" #
-        "<url><loc>" # baseUrl # "/#about</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
-        "<url><loc>" # baseUrl # "/#privacy</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
-        "<url><loc>" # baseUrl # "/#terms</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
-        "<url><loc>" # baseUrl # "/#ethics</loc><lastmod>" # today # "</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>" #
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" #
+        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n" #
+        "  <url><loc>" # baseUrl # "/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/problems</loc><changefreq>daily</changefreq><priority>0.9</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/blueprints</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/compiler</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/documentation</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/events</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/dashboard</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/chat</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/technews</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/techmagazine</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/online-test</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/practice</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/leaderboard</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/frontend</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/backend</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/python</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/java</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/devops</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/data-science</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/machine-learning</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/cybersecurity</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/blockchain</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/cloud</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/game-dev</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/ui-ux</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/roadmap/system-design</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/privacy</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>\n" #
+        "  <url><loc>" # baseUrl # "/terms</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>\n" #
         "</urlset>";
       return {
         status_code = 200 : Nat16;
         headers = [
-          { name = "Content-Type"; value = "application/xml" },
+          { name = "Content-Type"; value = "application/xml; charset=utf-8" },
           { name = "Cache-Control"; value = "public, max-age=3600" },
           { name = "Access-Control-Allow-Origin"; value = "*" },
         ];
@@ -118,6 +125,7 @@ actor {
       let robots : Text =
         "User-agent: *\n" #
         "Allow: /\n" #
+        "Disallow: /api/\n" #
         "Sitemap: " # baseUrl # "/sitemap.xml\n";
       return {
         status_code = 200 : Nat16;

@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   BookOpen,
+  Camera,
   Code,
   FileText,
   Grid3X3,
@@ -30,13 +31,20 @@ import { CODING_PROBLEMS } from "../data/problems";
 
 const BADGE_META: Record<
   string,
-  { icon: string; label: string; desc: string; color: string }
+  {
+    icon: string;
+    label: string;
+    desc: string;
+    color: string;
+    unlockDate?: string;
+  }
 > = {
   "first-problem": {
     icon: "🚀",
     label: "First Steps",
     desc: "Solved your first problem",
     color: "from-blue-500/20 to-blue-600/20 border-blue-500/30 text-blue-400",
+    unlockDate: "Jan 2026",
   },
   "streak-7": {
     icon: "🔥",
@@ -44,6 +52,7 @@ const BADGE_META: Record<
     desc: "7-day study streak",
     color:
       "from-orange-500/20 to-orange-600/20 border-orange-500/30 text-orange-400",
+    unlockDate: "Feb 2026",
   },
   "code-master": {
     icon: "💻",
@@ -51,12 +60,14 @@ const BADGE_META: Record<
     desc: "Solved 25+ problems",
     color:
       "from-purple-500/20 to-purple-600/20 border-purple-500/30 text-purple-400",
+    unlockDate: "Mar 2026",
   },
   "love-call": {
     icon: "💖",
     label: "Love Call",
     desc: "First companion interaction",
     color: "from-pink-500/20 to-pink-600/20 border-pink-500/30 text-pink-400",
+    unlockDate: "Jan 2026",
   },
   "hot-streak": {
     icon: "⚡",
@@ -64,6 +75,7 @@ const BADGE_META: Record<
     desc: "15-day streak achieved",
     color:
       "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400",
+    unlockDate: "Apr 2026",
   },
   century: {
     icon: "💯",
@@ -71,18 +83,21 @@ const BADGE_META: Record<
     desc: "Solved 100 problems",
     color:
       "from-green-500/20 to-green-600/20 border-green-500/30 text-green-400",
+    unlockDate: "May 2026",
   },
   enrolled: {
     icon: "📚",
     label: "Scholar",
     desc: "Enrolled in a course",
     color: "from-teal-500/20 to-teal-600/20 border-teal-500/30 text-teal-400",
+    unlockDate: "Jan 2026",
   },
   speedster: {
     icon: "🏎️",
     label: "Speedster",
     desc: "Solved 3 problems in a day",
     color: "from-red-500/20 to-red-600/20 border-red-500/30 text-red-400",
+    unlockDate: "Feb 2026",
   },
 };
 
@@ -169,6 +184,8 @@ interface PostItem {
   gradient: string;
   diffColor?: string;
   icon?: string;
+  type: "achievement" | "photo" | "solved";
+  date?: string;
 }
 
 // ─── Story Highlight Viewer ───────────────────────────────────────────────────
@@ -196,7 +213,6 @@ function HighlightViewer({
     });
   }, [items.length, onClose]);
 
-  // Auto-advance via useEffect
   useMemo(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(advance, DURATION);
@@ -217,7 +233,6 @@ function HighlightViewer({
       data-ocid="profile.highlight_viewer.dialog"
       onClick={onClose}
     >
-      {/* Progress bars */}
       <div className="absolute top-0 left-0 right-0 flex gap-1 px-3 pt-3 z-10">
         {items.map((_, i) => (
           <div
@@ -237,7 +252,6 @@ function HighlightViewer({
         ))}
       </div>
 
-      {/* Header */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay click-stop */}
       <div
         className="absolute top-6 left-4 right-4 flex items-center gap-3 z-10"
@@ -258,7 +272,6 @@ function HighlightViewer({
         </button>
       </div>
 
-      {/* Content card */}
       {current ? (
         <motion.div
           key={current.id}
@@ -277,7 +290,6 @@ function HighlightViewer({
         <div className="text-muted-foreground text-sm">Nothing here yet</div>
       )}
 
-      {/* Tap zones */}
       <button
         type="button"
         className="absolute left-0 top-0 bottom-0 w-1/3 z-20"
@@ -297,7 +309,6 @@ function HighlightViewer({
         aria-label="Next story"
       />
 
-      {/* Counter */}
       <div className="absolute bottom-8 text-white/50 text-xs">
         {idx + 1} / {items.length}
       </div>
@@ -541,8 +552,10 @@ function PostGridItem({
             {post.subtitle}
           </div>
         )}
+        {post.date && (
+          <div className="mt-1 text-white/60 text-[9px]">{post.date}</div>
+        )}
       </div>
-      {/* Hover overlay */}
       <AnimatePresence>
         {hovered && (
           <motion.div
@@ -555,6 +568,9 @@ function PostGridItem({
               {post.title}
             </div>
             <div className="text-white/60 text-[10px]">{post.subtitle}</div>
+            {post.date && (
+              <div className="text-white/40 text-[9px]">{post.date}</div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -594,6 +610,38 @@ function AvatarRing({
   );
 }
 
+// ─── Empty Posts State ────────────────────────────────────────────────────────
+
+function EmptyPostsState({ isOwnProfile }: { isOwnProfile: boolean }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center py-20 px-6 text-center"
+      data-ocid="profile.posts.empty_state"
+    >
+      <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+        <Camera className="w-9 h-9 text-muted-foreground/50" />
+      </div>
+      <p className="font-bold text-foreground text-base mb-1">No posts yet</p>
+      <p className="text-sm text-muted-foreground max-w-[240px] leading-relaxed">
+        {isOwnProfile
+          ? "Share your achievements and photos to see them here."
+          : "This user hasn't posted anything yet."}
+      </p>
+      {isOwnProfile && (
+        <Button
+          size="sm"
+          className="mt-4 rounded-full gap-2"
+          data-ocid="profile.posts.upload_button"
+          onClick={() => toast.info("Photo upload coming soon!")}
+        >
+          <Camera className="w-4 h-4" />
+          Share a Photo
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const TOTAL_EASY =
@@ -617,7 +665,6 @@ export default function UserProfilePage({
     (!localStorage.getItem("cc_viewingUser") ||
       localStorage.getItem("cc_viewingUser") === user.username);
 
-  // ── Follow state ───────────────────────────────────────────────────────────
   const [isFollowing, setIsFollowing] = useState<boolean>(() => {
     try {
       const list: string[] = JSON.parse(
@@ -642,14 +689,12 @@ export default function UserProfilePage({
     date: string;
   } | null>(null);
 
-  // Bio
   const [profileBio] = useState(
     () =>
       localStorage.getItem("cc_profile_bio") ??
       "CS enthusiast 💻 | Learning every day 🚀",
   );
 
-  // ── Profile data ───────────────────────────────────────────────────────────
   const profileData = isOwnProfile
     ? user
     : {
@@ -686,9 +731,8 @@ export default function UserProfilePage({
         }
       })()
     : deterministicCount(viewingUsername, 250, 10);
-  const postsCount = solvedProblems.length + badges.length;
 
-  // ── Solved by difficulty ───────────────────────────────────────────────────
+  // ── Solved by difficulty ────────────────────────────────────────────────────
   const solvedByDiff = useMemo(() => {
     const easy: typeof CODING_PROBLEMS = [];
     const medium: typeof CODING_PROBLEMS = [];
@@ -703,46 +747,63 @@ export default function UserProfilePage({
     return { easy, medium, hard };
   }, [solvedProblems]);
 
-  // ── Posts (3-col grid) ─────────────────────────────────────────────────────
+  // ── Posts: only user-uploaded photos + earned achievements ─────────────────
+  // User-uploaded photos from localStorage (set when user shares a photo)
+  const uploadedPhotos = useMemo(() => {
+    try {
+      const key = `cc_photos_${viewingUsername}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        return JSON.parse(stored) as Array<{
+          id: string;
+          title: string;
+          date: string;
+          gradient: string;
+        }>;
+      }
+    } catch {}
+    return [];
+  }, [viewingUsername]);
+
+  // Achievement posts: earned badges with unlock dates
+  const achievementPosts: PostItem[] = useMemo(() => {
+    return badges
+      .map((badgeId, i) => {
+        const meta = BADGE_META[badgeId];
+        if (!meta) return null;
+        const gradIdx = i % POST_GRADIENTS.length;
+        return {
+          id: `badge-${badgeId}`,
+          title: meta.label,
+          subtitle: meta.desc,
+          gradient: POST_GRADIENTS[gradIdx],
+          icon: meta.icon,
+          type: "achievement" as const,
+          date: meta.unlockDate,
+        };
+      })
+      .filter(Boolean) as PostItem[];
+  }, [badges]);
+
+  // Photo posts from user uploads
+  const photoPosts: PostItem[] = useMemo(() => {
+    return uploadedPhotos.map((photo, i) => ({
+      id: `photo-${photo.id}`,
+      title: photo.title,
+      subtitle: "Photo",
+      gradient: photo.gradient ?? POST_GRADIENTS[i % POST_GRADIENTS.length],
+      icon: "📸",
+      type: "photo" as const,
+      date: photo.date,
+    }));
+  }, [uploadedPhotos]);
+
+  // Combined posts: photos first, then achievements — NO dummy solved problems in posts tab
   const allPosts: PostItem[] = useMemo(() => {
-    const posts: PostItem[] = [];
+    return [...photoPosts, ...achievementPosts];
+  }, [photoPosts, achievementPosts]);
 
-    // Solved problems as posts
-    for (const id of solvedProblems) {
-      const p = CODING_PROBLEMS.find((x) => String(x.id) === String(id));
-      if (!p) continue;
-      const gradIdx = posts.length % POST_GRADIENTS.length;
-      posts.push({
-        id: `prob-${p.id}`,
-        title: p.title,
-        subtitle: p.difficulty,
-        gradient: POST_GRADIENTS[gradIdx],
-        diffColor: DIFF_COLORS[p.difficulty as keyof typeof DIFF_COLORS],
-        icon:
-          p.difficulty === "Easy"
-            ? "✅"
-            : p.difficulty === "Medium"
-              ? "⚡"
-              : "🔥",
-      });
-    }
-
-    // Badges as posts
-    for (const badgeId of badges) {
-      const meta = BADGE_META[badgeId];
-      if (!meta) continue;
-      const gradIdx = posts.length % POST_GRADIENTS.length;
-      posts.push({
-        id: `badge-${badgeId}`,
-        title: meta.label,
-        subtitle: "Badge earned",
-        gradient: POST_GRADIENTS[gradIdx],
-        icon: meta.icon,
-      });
-    }
-
-    return posts;
-  }, [solvedProblems, badges]);
+  const postsCount = allPosts.length;
 
   // ── Notes ──────────────────────────────────────────────────────────────────
   const notes = useMemo(() => {
@@ -759,36 +820,10 @@ export default function UserProfilePage({
           date: string;
         }>;
     } catch {}
-    // Simulated notes
-    return [
-      {
-        id: "n1",
-        title: "Binary Search Notes",
-        content:
-          "Binary search works by repeatedly dividing the search space in half. Time complexity: O(log n). Space: O(1).",
-        topic: "Algorithms",
-        date: "Jan 2025",
-      },
-      {
-        id: "n2",
-        title: "React Hooks Summary",
-        content:
-          "useState, useEffect, useContext, useMemo, useCallback — all the essential hooks and when to use them.",
-        topic: "Frontend",
-        date: "Feb 2025",
-      },
-      {
-        id: "n3",
-        title: "Python List Comprehensions",
-        content:
-          "[x*2 for x in range(10) if x % 2 == 0] — powerful one-liner patterns for filtering and mapping.",
-        topic: "Python",
-        date: "Mar 2025",
-      },
-    ];
+    return [];
   }, [viewingUsername, isOwnProfile]);
 
-  // ── Highlights data ────────────────────────────────────────────────────────
+  // ── Highlights ─────────────────────────────────────────────────────────────
   const highlights = useMemo(
     () => ({
       solved: {
@@ -942,7 +977,6 @@ export default function UserProfilePage({
       <div className="flex-1 overflow-y-auto">
         {/* ── Profile Header ── */}
         <div className="px-4 pt-5 pb-4">
-          {/* Avatar + Stats row */}
           <div className="flex items-center gap-5 mb-4">
             <AvatarRing
               config={profileData.avatarConfig ?? DEFAULT_AVATAR_CONFIG}
@@ -951,18 +985,16 @@ export default function UserProfilePage({
               onClick={() => isOwnProfile && setShowEditProfile(true)}
             />
 
-            {/* Stats */}
             <div className="flex-1 flex justify-around">
               <button
                 type="button"
                 className="flex flex-col items-center group"
-                onClick={() => setShowFollowers(true)}
                 data-ocid="profile.stats.posts_button"
               >
                 <span className="text-lg font-extrabold text-foreground leading-none">
                   {postsCount}
                 </span>
-                <span className="text-xs text-muted-foreground mt-0.5 group-hover:text-primary transition-colors">
+                <span className="text-xs text-muted-foreground mt-0.5">
                   Posts
                 </span>
               </button>
@@ -1138,29 +1170,32 @@ export default function UserProfilePage({
 
         {/* ── Tab Content ── */}
         <div className="pb-28">
-          {/* POSTS TAB */}
+          {/* POSTS TAB — only uploaded photos + earned achievements */}
           {activeTab === "posts" && (
             <div data-ocid="profile.posts_panel">
               {allPosts.length === 0 ? (
-                <div
-                  className="flex flex-col items-center justify-center py-20 text-muted-foreground"
-                  data-ocid="profile.posts.empty_state"
-                >
-                  <Grid3X3 className="w-12 h-12 mb-3 opacity-30" />
-                  <p className="font-semibold text-sm">No Posts Yet</p>
-                  <p className="text-xs mt-1">
-                    Solve problems to create your first post
-                  </p>
-                </div>
+                <EmptyPostsState isOwnProfile={isOwnProfile} />
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-px bg-border">
+                  {/* Section labels */}
+                  {photoPosts.length > 0 && achievementPosts.length > 0 && (
+                    <div className="px-4 pt-3 pb-1">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Photos &amp; Achievements
+                      </p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 sm:grid-cols-3 gap-px bg-border">
                     {visiblePosts.map((post, i) => (
                       <PostGridItem
                         key={post.id}
                         post={post}
                         index={i}
-                        onClick={() => toast.info(post.title)}
+                        onClick={() =>
+                          toast.info(
+                            `${post.type === "achievement" ? "🏆 " : "📸 "}${post.title}`,
+                          )
+                        }
                       />
                     ))}
                   </div>
@@ -1190,7 +1225,7 @@ export default function UserProfilePage({
               className="px-4 py-4 space-y-5"
               data-ocid="profile.solved_panel"
             >
-              {/* Difficulty rings row */}
+              {/* Difficulty rings */}
               <div className="flex justify-around py-4 bg-card border border-border rounded-2xl">
                 {(["Easy", "Medium", "Hard"] as const).map((diff) => {
                   const items =
@@ -1271,7 +1306,6 @@ export default function UserProfilePage({
                 })}
               </div>
 
-              {/* Grouped by difficulty */}
               {solvedProblems.length === 0 ? (
                 <div
                   className="flex flex-col items-center justify-center py-12 text-muted-foreground"
@@ -1340,7 +1374,6 @@ export default function UserProfilePage({
           {/* BADGES TAB */}
           {activeTab === "badges" && (
             <div className="px-4 py-4" data-ocid="profile.badges_panel">
-              {/* Earned */}
               {badges.length > 0 && (
                 <div className="mb-6">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
@@ -1354,6 +1387,7 @@ export default function UserProfilePage({
                         desc: "",
                         color:
                           "from-muted/30 to-muted/50 border-border text-muted-foreground",
+                        unlockDate: undefined,
                       };
                       return (
                         <div
@@ -1369,6 +1403,11 @@ export default function UserProfilePage({
                             <div className="text-[10px] opacity-70 mt-0.5 leading-tight">
                               {meta.desc}
                             </div>
+                            {meta.unlockDate && (
+                              <div className="text-[9px] opacity-50 mt-0.5">
+                                Earned {meta.unlockDate}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -1377,7 +1416,6 @@ export default function UserProfilePage({
                 </div>
               )}
 
-              {/* Locked badges */}
               {badges.length < ALL_BADGES.length && (
                 <div>
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
@@ -1453,7 +1491,6 @@ export default function UserProfilePage({
                 </div>
               ) : (
                 <>
-                  {/* Group by topic */}
                   {(() => {
                     const grouped: Record<string, typeof notes> = {};
                     for (const n of notes) {

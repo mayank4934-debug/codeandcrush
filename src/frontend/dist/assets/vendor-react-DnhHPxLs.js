@@ -1,4 +1,4 @@
-import{r as o,g as _}from"./vendor-query-CtgLfNTt.js";var s={exports:{}},i={};/**
+import{r as o,g as _}from"./vendor-query-xIuP14_n.js";var s={exports:{}},i={};/**
  * @license React
  * react-dom.production.js
  *
